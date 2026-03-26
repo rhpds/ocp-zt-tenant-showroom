@@ -1,5 +1,5 @@
 ---
-# Module 1 Solve — create ConfigMap and Deployment in pre-created namespace
+# Module 1 Solve — create a ConfigMap and a Secret in the student namespace
 
 - name: Create ConfigMap
   kubernetes.core.k8s:
@@ -10,54 +10,21 @@
       metadata:
         name: zt-test-config
         namespace: "{{ student_ns }}"
-        labels:
-          lab: zt-test
       data:
         env: test
         solved-by: zerotouch
 
-- name: Create Deployment
+- name: Create Secret
   kubernetes.core.k8s:
     state: present
     definition:
-      apiVersion: apps/v1
-      kind: Deployment
+      apiVersion: v1
+      kind: Secret
       metadata:
-        name: zt-test-app
+        name: zt-test-secret
         namespace: "{{ student_ns }}"
-        labels:
-          lab: zt-test
-      spec:
-        replicas: 1
-        selector:
-          matchLabels:
-            app: zt-test-app
-        template:
-          metadata:
-            labels:
-              app: zt-test-app
-          spec:
-            containers:
-              - name: app
-                image: registry.access.redhat.com/ubi8/httpd-24:latest
-                ports:
-                  - containerPort: 8080
-
-- name: Wait for pod to be running
-  kubernetes.core.k8s_info:
-    api_version: v1
-    kind: Pod
-    namespace: "{{ student_ns }}"
-    label_selectors:
-      - "app=zt-test-app"
-    field_selectors:
-      - "status.phase=Running"
-    wait: true
-    wait_timeout: 120
-  register: r_pod
-  until: r_pod.resources | length > 0
-  retries: 24
-  delay: 5
+      stringData:
+        lab-key: zt-poc-value
 
 - name: Solve complete
   ansible.builtin.debug:

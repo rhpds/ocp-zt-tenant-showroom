@@ -1,32 +1,20 @@
-= Module 1: Deploy a Workload on OpenShift
+= Module 1: Create Resources in Your Namespace
 :imagesdir: ../assets/images
 
-In this module you will deploy a ConfigMap and a Deployment to your personal namespace.
-Your namespace has been pre-created and is ready to use.
+In this module you will create a ConfigMap and a Secret in your pre-assigned namespace.
 
 == Exercise 1: Find your namespace in the OCP Console
 
-. In the *OCP Console* tab, click the perspective switcher in the top-left and select *Developer*.
+. In the *OCP Console* tab, switch to the *Developer* perspective (top-left switcher).
 
-. Click the *Project* dropdown at the top and search for `zt-test`.
-Select your namespace — it follows the pattern `zt-test-<your-username>`.
+. Click the *Project* dropdown and search for `zt-test`.
+Select `zt-test-<your-username>`.
 
-. Click *Topology* in the left navigation.
-The view is empty for now — you will deploy an application here in the next exercise.
+. Click *Config Maps* and *Secrets* in the left navigation — both are currently empty.
 
-[NOTE]
-====
-Your username in this lab is your OCP login name.
-You can confirm it by checking *User Management* → *Users* in the Administrator perspective,
-or by looking at the project name that was pre-assigned to you.
-====
+== Exercise 2: Create the ConfigMap and Secret
 
-== Exercise 2: Create the ConfigMap and Deployment
-
-Set your namespace as a variable so the remaining commands are shorter.
-Replace `<username>` with your OCP username.
-
-. Set the namespace variable:
+. Set your namespace variable:
 +
 [source,sh,role=execute]
 ----
@@ -43,36 +31,27 @@ oc create configmap zt-test-config \
   -n $NS
 ----
 
-. Create the Deployment:
+. Create the Secret:
 +
 [source,sh,role=execute]
 ----
-oc create deployment zt-test-app \
-  --image=registry.access.redhat.com/ubi8/httpd-24:latest \
+oc create secret generic zt-test-secret \
+  --from-literal=lab-key=zt-poc-value \
   -n $NS
 ----
 
 == Verify
 
-Wait for the pod to reach *Running* status:
-
 [source,sh,role=execute]
 ----
-oc get pods -n $NS -l app=zt-test-app
+oc get configmap,secret -n $NS | grep zt-test
 ----
 
 .Expected output
 [source,texinfo]
 ----
-NAME                           READY   STATUS    RESTARTS   AGE
-zt-test-app-xxxxxxxxx-xxxxx   1/1     Running   0          30s
+configmap/zt-test-config   1      5s
+secret/zt-test-secret      1      3s
 ----
-
-You can also check the *OCP Console* Topology view — `zt-test-app` will appear as a workload.
-
-[TIP]
-====
-If the pod is in `Pending` or `ContainerCreating` state, wait 30 seconds and run the verify command again.
-====
 
 Click *Next* to validate your work.

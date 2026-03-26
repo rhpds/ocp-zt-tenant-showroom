@@ -1,25 +1,5 @@
 ---
-# Module 1 Validation — check namespace, configmap, deployment, pod
-
-- name: Check namespace exists
-  kubernetes.core.k8s_info:
-    api_version: v1
-    kind: Namespace
-    name: "{{ student_ns }}"
-  register: r_ns
-
-- name: Fail — namespace not found
-  when: r_ns.resources | length == 0
-  block:
-    - ansible.builtin.copy:
-        dest: "{{ job_info_dir }}/validation_failure.out"
-        content: |
-          Namespace {{ student_ns }} not found.
-
-          Create it first:
-            oc new-project {{ student_ns }}
-    - ansible.builtin.fail:
-        msg: "Namespace missing"
+# Module 1 Validation — check ConfigMap and Secret exist
 
 - name: Check ConfigMap exists
   kubernetes.core.k8s_info:
@@ -44,54 +24,28 @@
     - ansible.builtin.fail:
         msg: "ConfigMap missing"
 
-- name: Check Deployment exists
-  kubernetes.core.k8s_info:
-    api_version: apps/v1
-    kind: Deployment
-    name: zt-test-app
-    namespace: "{{ student_ns }}"
-  register: r_deploy
-
-- name: Fail — Deployment not found
-  when: r_deploy.resources | length == 0
-  block:
-    - ansible.builtin.copy:
-        dest: "{{ job_info_dir }}/validation_failure.out"
-        content: |
-          Deployment zt-test-app not found in {{ student_ns }}.
-
-          Create it:
-            oc create deployment zt-test-app \
-              --image=registry.access.redhat.com/ubi9/nginx-122:latest \
-              -n {{ student_ns }}
-    - ansible.builtin.fail:
-        msg: "Deployment missing"
-
-- name: Check pod is Running
+- name: Check Secret exists
   kubernetes.core.k8s_info:
     api_version: v1
-    kind: Pod
+    kind: Secret
+    name: zt-test-secret
     namespace: "{{ student_ns }}"
-    label_selectors:
-      - "app=zt-test-app"
-    field_selectors:
-      - "status.phase=Running"
-  register: r_pods
+  register: r_secret
 
-- name: Fail — no Running pod
-  when: r_pods.resources | length == 0
+- name: Fail — Secret not found
+  when: r_secret.resources | length == 0
   block:
     - ansible.builtin.copy:
         dest: "{{ job_info_dir }}/validation_failure.out"
         content: |
-          Deployment zt-test-app exists but no pod is Running yet in {{ student_ns }}.
+          Secret zt-test-secret not found in {{ student_ns }}.
 
-          Check:
-            oc get pods -n {{ student_ns }} -l app=zt-test-app
-
-          Wait for Running state then click Validate again.
+          Create it:
+            oc create secret generic zt-test-secret \
+              --from-literal=lab-key=zt-poc-value \
+              -n {{ student_ns }}
     - ansible.builtin.fail:
-        msg: "Pod not running"
+        msg: "Secret missing"
 
 - name: Validation passed
   ansible.builtin.debug:

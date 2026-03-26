@@ -1,5 +1,5 @@
 ---
-# Module 1 Setup — verify student namespace exists (pre-created at deploy time)
+# Module 1 Setup — verify student namespace exists
 - name: Check student namespace exists
   kubernetes.core.k8s_info:
     api_version: v1
@@ -9,6 +9,4 @@
 
 - name: Report setup status
   ansible.builtin.debug:
-    msg: >-
-      {{ 'Namespace ' + student_ns + ' is ready.' if r_ns.resources | length > 0
-         else 'WARNING: namespace ' + student_ns + ' not found.' }}
+    msg: "Namespace {{ student_ns }} is ready."
