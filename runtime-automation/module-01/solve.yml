@@ -1,34 +1,5 @@
 ---
-# Module 1 Solve — create namespace, configmap, deployment
-
-- name: Create namespace
-  kubernetes.core.k8s:
-    state: present
-    definition:
-      apiVersion: v1
-      kind: Namespace
-      metadata:
-        name: "{{ student_ns }}"
-        labels:
-          lab: zt-test
-
-- name: Grant student user admin access to their namespace
-  kubernetes.core.k8s:
-    state: present
-    definition:
-      apiVersion: rbac.authorization.k8s.io/v1
-      kind: RoleBinding
-      metadata:
-        name: "{{ student_user }}-admin"
-        namespace: "{{ student_ns }}"
-      subjects:
-        - kind: User
-          name: "{{ student_user }}"
-          apiGroup: rbac.authorization.k8s.io
-      roleRef:
-        kind: ClusterRole
-        name: admin
-        apiGroup: rbac.authorization.k8s.io
+# Module 1 Solve — create ConfigMap and Deployment in pre-created namespace
 
 - name: Create ConfigMap
   kubernetes.core.k8s:

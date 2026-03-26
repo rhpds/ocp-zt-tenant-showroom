@@ -1,17 +1,5 @@
 ---
-# Module 2 Setup — ensure baseline from module-01 exists
-
-- name: Create namespace if missing
-  kubernetes.core.k8s:
-    state: present
-    definition:
-      apiVersion: v1
-      kind: Namespace
-      metadata:
-        name: "{{ student_ns }}"
-        labels:
-          lab: zt-test
-
+# Module 2 Setup — ensure module-01 baseline resources exist
 - name: Ensure ConfigMap exists
   kubernetes.core.k8s:
     state: present

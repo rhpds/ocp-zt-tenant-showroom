@@ -1,51 +1,38 @@
 = Module 1: Deploy a Workload on OpenShift
 :imagesdir: ../assets/images
 
-In this module you will create your personal namespace and deploy a ConfigMap and Deployment to it.
+In this module you will deploy a ConfigMap and a Deployment to your personal namespace.
+Your namespace has been pre-created and is ready to use.
 
-== Exercise 1: Create your namespace
+== Exercise 1: Find your namespace in the OCP Console
 
-First, confirm your username and create your namespace.
+. In the *OCP Console* tab, click the perspective switcher in the top-left and select *Developer*.
 
-. Check your username:
-+
-[source,sh,role=execute]
-----
-oc whoami
-----
+. Click the *Project* dropdown at the top and search for `zt-test`.
+Select your namespace — it follows the pattern `zt-test-<your-username>`.
 
-. Create your personal namespace:
-+
-[source,sh,role=execute]
-----
-oc new-project zt-test-$(oc whoami)
-----
+. Click *Topology* in the left navigation.
+The view is empty for now — you will deploy an application here in the next exercise.
 
-. Set a variable so the remaining commands are shorter:
+[NOTE]
+====
+Your username in this lab is your OCP login name.
+You can confirm it by checking *User Management* → *Users* in the Administrator perspective,
+or by looking at the project name that was pre-assigned to you.
+====
+
+== Exercise 2: Create the ConfigMap and Deployment
+
+Set your namespace as a variable so the remaining commands are shorter.
+Replace `<username>` with your OCP username.
+
+. Set the namespace variable:
 +
 [source,sh,role=execute]
 ----
 export NS=zt-test-$(oc whoami)
 echo "Using namespace: $NS"
 ----
-
-[NOTE]
-====
-If you see `Error from server (AlreadyExists)` the namespace already exists -- that is fine.
-Run the `export NS=...` line above to set the variable and continue.
-====
-
-== Exercise 2: Explore your namespace in the OCP Console
-
-. In the *OCP Console* tab, click the perspective switcher in the top-left and select *Developer*.
-
-. Click the *Project* dropdown at the top and search for `zt-test`.
-Select your namespace `zt-test-<your-username>`.
-
-. Click *Topology* in the left navigation.
-The view is empty for now -- you will deploy an application here in the next step.
-
-== Exercise 3: Create the ConfigMap and Deployment
 
 . Create the ConfigMap:
 +
@@ -81,7 +68,7 @@ NAME                           READY   STATUS    RESTARTS   AGE
 zt-test-app-xxxxxxxxx-xxxxx   1/1     Running   0          30s
 ----
 
-You can also refresh the *OCP Console* Topology view -- `zt-test-app` will appear as a workload.
+You can also check the *OCP Console* Topology view — `zt-test-app` will appear as a workload.
 
 [TIP]
 ====
