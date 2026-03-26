@@ -1,45 +1,41 @@
 ---
-# Module 1 Solve — runs when student clicks Solve
-- name: Get student username
-  ansible.builtin.command: oc whoami
-  register: r_whoami
-  changed_when: false
+# Module 1 Solve — create namespace, configmap, deployment
 
-- name: Set student namespace fact
-  ansible.builtin.set_fact:
-    student_ns: "zt-test-{{ r_whoami.stdout | trim }}"
+- name: Create namespace
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ student_ns }}"
+        labels:
+          lab: zt-test
 
-- name: Create namespace if missing
-  ansible.builtin.command: oc new-project {{ student_ns }}
-  register: r_ns
-  changed_when: r_ns.rc == 0
-  failed_when: r_ns.rc != 0 and 'AlreadyExists' not in r_ns.stderr
-
-- name: Create ConfigMap (idempotent)
-  ansible.builtin.command: >
-    oc apply -n {{ student_ns }} -f -
-  args:
-    stdin: |
+- name: Create ConfigMap
+  kubernetes.core.k8s:
+    state: present
+    definition:
       apiVersion: v1
       kind: ConfigMap
       metadata:
         name: zt-test-config
+        namespace: "{{ student_ns }}"
         labels:
           lab: zt-test
       data:
         env: test
         solved-by: zerotouch
-  changed_when: true
 
-- name: Create Deployment (idempotent)
-  ansible.builtin.command: >
-    oc apply -n {{ student_ns }} -f -
-  args:
-    stdin: |
+- name: Create Deployment
+  kubernetes.core.k8s:
+    state: present
+    definition:
       apiVersion: apps/v1
       kind: Deployment
       metadata:
         name: zt-test-app
+        namespace: "{{ student_ns }}"
         labels:
           lab: zt-test
       spec:
@@ -57,11 +53,22 @@
                 image: registry.access.redhat.com/ubi9/nginx-122:latest
                 ports:
                   - containerPort: 8080
-  changed_when: true
 
-- name: Wait for pod to be Running
-  ansible.builtin.command: oc rollout status deployment/zt-test-app -n {{ student_ns }} --timeout=120s
-  changed_when: false
+- name: Wait for pod to be running
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Pod
+    namespace: "{{ student_ns }}"
+    label_selectors:
+      - "app=zt-test-app"
+    field_selectors:
+      - "status.phase=Running"
+    wait: true
+    wait_timeout: 120
+  register: r_pod
+  until: r_pod.resources | length > 0
+  retries: 24
+  delay: 5
 
 - name: Solve complete
   ansible.builtin.debug:

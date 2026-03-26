@@ -1,45 +1,51 @@
 ---
-# Module 2 Setup — ensure baseline from module 1 exists
-- name: Get student username
-  ansible.builtin.command: oc whoami
-  register: r_whoami
-  changed_when: false
+# Module 2 Setup — ensure baseline from module-01 exists
 
-- name: Set student namespace fact
-  ansible.builtin.set_fact:
-    student_ns: "zt-test-{{ r_whoami.stdout | trim }}"
+- name: Create namespace if missing
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ student_ns }}"
+        labels:
+          lab: zt-test
 
-- name: Ensure namespace exists
-  ansible.builtin.command: oc new-project {{ student_ns }}
-  register: r_ns
-  changed_when: r_ns.rc == 0
-  failed_when: r_ns.rc != 0 and 'AlreadyExists' not in r_ns.stderr
+- name: Ensure ConfigMap exists
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: zt-test-config
+        namespace: "{{ student_ns }}"
+      data:
+        env: test
 
-- name: Ensure module-01 ConfigMap exists
-  ansible.builtin.command: oc get configmap zt-test-config -n {{ student_ns }}
-  register: r_cm
-  changed_when: false
-  failed_when: false
-
-- name: Create ConfigMap if missing
-  when: r_cm.rc != 0
-  ansible.builtin.command: >
-    oc create configmap zt-test-config --from-literal=env=test -n {{ student_ns }}
-  changed_when: true
-
-- name: Ensure module-01 Deployment exists
-  ansible.builtin.command: oc get deployment zt-test-app -n {{ student_ns }}
-  register: r_deploy
-  changed_when: false
-  failed_when: false
-
-- name: Create Deployment if missing
-  when: r_deploy.rc != 0
-  ansible.builtin.command: >
-    oc create deployment zt-test-app
-    --image=registry.access.redhat.com/ubi9/nginx-122:latest
-    -n {{ student_ns }}
-  changed_when: true
+- name: Ensure Deployment exists
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: zt-test-app
+        namespace: "{{ student_ns }}"
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            app: zt-test-app
+        template:
+          metadata:
+            labels:
+              app: zt-test-app
+          spec:
+            containers:
+              - name: app
+                image: registry.access.redhat.com/ubi9/nginx-122:latest
 
 - name: Report setup complete
   ansible.builtin.debug:

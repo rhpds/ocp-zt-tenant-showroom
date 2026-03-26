@@ -1,23 +1,20 @@
 ---
-# Module 2 Validation — check compliance label
-- name: Get student username
-  ansible.builtin.command: oc whoami
-  register: r_whoami
-  changed_when: false
+# Module 2 Validation — check compliance=passed label
 
-- name: Set student namespace fact
+- name: Get namespace
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Namespace
+    name: "{{ student_ns }}"
+  register: r_ns
+
+- name: Set compliance label fact
   ansible.builtin.set_fact:
-    student_ns: "zt-test-{{ r_whoami.stdout | trim }}"
-
-- name: Get namespace labels
-  ansible.builtin.command: >
-    oc get namespace {{ student_ns }} -o jsonpath='{.metadata.labels.compliance}'
-  register: r_label
-  changed_when: false
-  failed_when: false
+    compliance_label: "{{ r_ns.resources[0].metadata.labels.compliance | default('') }}"
+  when: r_ns.resources | length > 0
 
 - name: Fail — compliance label not set
-  when: r_label.stdout | trim != "passed"
+  when: compliance_label | default('') != 'passed'
   block:
     - ansible.builtin.copy:
         dest: "{{ job_info_dir }}/validation_failure.out"
@@ -30,7 +27,7 @@
           Then verify:
             oc get namespace {{ student_ns }} --show-labels
     - ansible.builtin.fail:
-        msg: "Validation failed — compliance label missing"
+        msg: "Compliance label missing"
 
 - name: Validation passed
   ansible.builtin.debug:

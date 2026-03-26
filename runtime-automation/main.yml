@@ -1,9 +1,9 @@
 ---
 # =============================================================================
 # runtime-automation/main.yml
-# Entry point for ansible-runner in the nookbag-sidecar container.
-# Runs locally inside the pod — no SSH needed.
-# Vars injected by sidecar: module_dir, module_stage, job_info_dir
+# Entry point for zerotouch-automation runner (connection: local).
+# Uses kubernetes.core to talk to OCP — no oc/kubectl needed.
+# Vars injected by runner: module_dir, module_stage, job_info_dir
 # =============================================================================
 
 - name: Run module stage
@@ -11,6 +11,17 @@
   connection: local
   gather_facts: false
 
+  pre_tasks:
+    - name: Ensure kubernetes Python package is installed
+      ansible.builtin.pip:
+        name: kubernetes
+        state: present
+      changed_when: false
+
+  vars:
+    student_user: "{{ lookup('env', 'LAB_USER') | default('student', true) }}"
+    student_ns: "zt-test-{{ student_user }}"
+
   tasks:
-    - name: Run {{ module_stage }} for {{ module_dir }}
+    - name: "Run {{ module_stage }} for {{ module_dir }}"
       ansible.builtin.include_tasks: "{{ module_dir }}/{{ module_stage }}.yml"

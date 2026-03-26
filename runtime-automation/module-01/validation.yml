@@ -1,95 +1,98 @@
 ---
-# Module 1 Validation — runs when student clicks Next
-- name: Get student username
-  ansible.builtin.command: oc whoami
-  register: r_whoami
-  changed_when: false
-
-- name: Set student namespace fact
-  ansible.builtin.set_fact:
-    student_ns: "zt-test-{{ r_whoami.stdout | trim }}"
+# Module 1 Validation — check namespace, configmap, deployment, pod
 
 - name: Check namespace exists
-  ansible.builtin.command: oc get namespace {{ student_ns }}
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Namespace
+    name: "{{ student_ns }}"
   register: r_ns
-  changed_when: false
-  failed_when: false
 
 - name: Fail — namespace not found
-  when: r_ns.rc != 0
-  ansible.builtin.copy:
-    dest: "{{ job_info_dir }}/validation_failure.out"
-    content: |
-      Namespace {{ student_ns }} not found.
+  when: r_ns.resources | length == 0
+  block:
+    - ansible.builtin.copy:
+        dest: "{{ job_info_dir }}/validation_failure.out"
+        content: |
+          Namespace {{ student_ns }} not found.
 
-      Create it first:
-        oc new-project {{ student_ns }}
-  notify: fail validation
+          Create it first:
+            oc new-project {{ student_ns }}
+    - ansible.builtin.fail:
+        msg: "Namespace missing"
 
 - name: Check ConfigMap exists
-  ansible.builtin.command: oc get configmap zt-test-config -n {{ student_ns }}
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: ConfigMap
+    name: zt-test-config
+    namespace: "{{ student_ns }}"
   register: r_cm
-  changed_when: false
-  failed_when: false
 
 - name: Fail — ConfigMap not found
-  when: r_cm.rc != 0
-  ansible.builtin.copy:
-    dest: "{{ job_info_dir }}/validation_failure.out"
-    content: |
-      ConfigMap zt-test-config not found in {{ student_ns }}.
+  when: r_cm.resources | length == 0
+  block:
+    - ansible.builtin.copy:
+        dest: "{{ job_info_dir }}/validation_failure.out"
+        content: |
+          ConfigMap zt-test-config not found in {{ student_ns }}.
 
-      Create it:
-        oc create configmap zt-test-config \
-          --from-literal=env=test \
-          -n {{ student_ns }}
-  notify: fail validation
+          Create it:
+            oc create configmap zt-test-config \
+              --from-literal=env=test \
+              -n {{ student_ns }}
+    - ansible.builtin.fail:
+        msg: "ConfigMap missing"
 
 - name: Check Deployment exists
-  ansible.builtin.command: oc get deployment zt-test-app -n {{ student_ns }}
+  kubernetes.core.k8s_info:
+    api_version: apps/v1
+    kind: Deployment
+    name: zt-test-app
+    namespace: "{{ student_ns }}"
   register: r_deploy
-  changed_when: false
-  failed_when: false
 
 - name: Fail — Deployment not found
-  when: r_deploy.rc != 0
-  ansible.builtin.copy:
-    dest: "{{ job_info_dir }}/validation_failure.out"
-    content: |
-      Deployment zt-test-app not found in {{ student_ns }}.
+  when: r_deploy.resources | length == 0
+  block:
+    - ansible.builtin.copy:
+        dest: "{{ job_info_dir }}/validation_failure.out"
+        content: |
+          Deployment zt-test-app not found in {{ student_ns }}.
 
-      Create it:
-        oc create deployment zt-test-app \
-          --image=registry.access.redhat.com/ubi9/nginx-122:latest \
-          -n {{ student_ns }}
-  notify: fail validation
+          Create it:
+            oc create deployment zt-test-app \
+              --image=registry.access.redhat.com/ubi9/nginx-122:latest \
+              -n {{ student_ns }}
+    - ansible.builtin.fail:
+        msg: "Deployment missing"
 
 - name: Check pod is Running
-  ansible.builtin.command: >
-    oc get pods -n {{ student_ns }} -l app=zt-test-app
-    --field-selector=status.phase=Running --no-headers
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Pod
+    namespace: "{{ student_ns }}"
+    label_selectors:
+      - "app=zt-test-app"
+    field_selectors:
+      - "status.phase=Running"
   register: r_pods
-  changed_when: false
-  failed_when: false
 
-- name: Fail — pod not Running yet
-  when: r_pods.stdout | trim == ""
-  ansible.builtin.copy:
-    dest: "{{ job_info_dir }}/validation_failure.out"
-    content: |
-      Deployment zt-test-app exists but no pod is Running yet.
+- name: Fail — no Running pod
+  when: r_pods.resources | length == 0
+  block:
+    - ansible.builtin.copy:
+        dest: "{{ job_info_dir }}/validation_failure.out"
+        content: |
+          Deployment zt-test-app exists but no pod is Running yet in {{ student_ns }}.
 
-      Check status:
-        oc get pods -n {{ student_ns }} -l app=zt-test-app
+          Check:
+            oc get pods -n {{ student_ns }} -l app=zt-test-app
 
-      Wait for Running state then click Validate again.
-  notify: fail validation
+          Wait for Running state then click Validate again.
+    - ansible.builtin.fail:
+        msg: "Pod not running"
 
-- name: All checks passed
+- name: Validation passed
   ansible.builtin.debug:
     msg: "Module 1 validation passed for {{ student_ns }}"
-
-  handlers:
-    - name: fail validation
-      ansible.builtin.fail:
-        msg: "Validation failed — see validation_failure.out"
