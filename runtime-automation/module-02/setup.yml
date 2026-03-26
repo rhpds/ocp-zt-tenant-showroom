@@ -1,6 +1,15 @@
 ---
-# Module 2 Setup — ensure module-01 baseline resources exist
-- name: Ensure ConfigMap exists
+# Module 2 Setup — verify student namespace and module-01 resources exist
+- name: Check ConfigMap exists (module-01 baseline)
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: ConfigMap
+    name: zt-test-config
+    namespace: "{{ student_ns }}"
+  register: r_cm
+
+- name: Create ConfigMap if missing
+  when: r_cm.resources | length == 0
   kubernetes.core.k8s:
     state: present
     definition:
@@ -11,29 +20,6 @@
         namespace: "{{ student_ns }}"
       data:
         env: test
-
-- name: Ensure Deployment exists
-  kubernetes.core.k8s:
-    state: present
-    definition:
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: zt-test-app
-        namespace: "{{ student_ns }}"
-      spec:
-        replicas: 1
-        selector:
-          matchLabels:
-            app: zt-test-app
-        template:
-          metadata:
-            labels:
-              app: zt-test-app
-          spec:
-            containers:
-              - name: app
-                image: registry.access.redhat.com/ubi8/httpd-24:latest
 
 - name: Report setup complete
   ansible.builtin.debug:

@@ -1,60 +1,46 @@
-= Module 2: Apply a Compliance Label
+= Module 2: Label Your Namespace
 :imagesdir: ../assets/images
 
-In this module you will apply a compliance label to your namespace.
-This simulates a simple policy enforcement step -- a common pattern in real ZT labs.
+In this module you will apply a label to your namespace to mark the lab as complete.
 
-== Exercise 1: View namespace labels in the OCP Console
+== Exercise 1: View current namespace labels in the OCP Console
 
-. In the *OCP Console* tab, switch to the *Administrator* perspective using the
-top-left switcher.
+. In the *OCP Console* tab, switch to the *Administrator* perspective.
 
-. In the left navigation, go to *Home* -> *Projects*.
+. Go to *Home* -> *Projects* and click on `zt-test-<your-username>`.
 
-. Find your namespace (`zt-test-<your-username>`) and click it.
+. On the *Details* tab, find the *Labels* section.
+Note that `lab-status` is not set yet.
 
-. On the *Details* tab, scroll down to the *Labels* section.
-Note the current labels -- `compliance=passed` is not there yet.
+== Exercise 2: Apply the label
 
-== Exercise 2: Apply the compliance label
-
-. Set your namespace variable (if your terminal session restarted):
+. Set your namespace variable (if needed):
 +
 [source,sh,role=execute]
 ----
 export NS=zt-test-$(oc whoami)
 ----
 
-. Apply the compliance label:
+. Apply the label:
 +
 [source,sh,role=execute]
 ----
-oc label namespace $NS compliance=passed --overwrite
+oc label namespace $NS lab-status=complete --overwrite
 ----
 
 == Verify
 
-Confirm the label is set:
-
 [source,sh,role=execute]
 ----
-oc get namespace $NS --show-labels
+oc get namespace $NS --show-labels | grep lab-status
 ----
 
 .Expected output
 [source,texinfo]
 ----
-NAME               STATUS   AGE   LABELS
-zt-test-student1   Active   10m   compliance=passed,kubernetes.io/metadata.name=zt-test-student1,...
+zt-test-devuser-poc   Active   ...   lab-status=complete,...
 ----
 
-You can also refresh the *OCP Console* Projects view -- the `compliance=passed` label
-will now appear in the Labels section of your namespace details.
-
-[TIP]
-====
-If you see `compliance=failed` or no compliance label, re-run the `oc label` command
-above and verify again.
-====
+You can also refresh the OCP Console project details page — the `lab-status=complete` label will appear.
 
 Click *Next* to validate your work.

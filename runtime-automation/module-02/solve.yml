@@ -1,7 +1,6 @@
 ---
-# Module 2 Solve — apply compliance label
-
-- name: Apply compliance=passed label to namespace
+# Module 2 Solve — add a label to the student namespace and create a ConfigMap
+- name: Apply lab-status label to namespace
   kubernetes.core.k8s:
     state: patched
     definition:
@@ -10,8 +9,8 @@
       metadata:
         name: "{{ student_ns }}"
         labels:
-          compliance: passed
+          lab-status: complete
 
 - name: Solve complete
   ansible.builtin.debug:
-    msg: "Module 2 solved — compliance=passed applied to {{ student_ns }}"
+    msg: "Module 2 solved for {{ student_ns }}"

@@ -1,6 +1,5 @@
 ---
-# Module 2 Validation — check compliance=passed label
-
+# Module 2 Validation — check lab-status=complete label on namespace
 - name: Get namespace
   kubernetes.core.k8s_info:
     api_version: v1
@@ -8,27 +7,24 @@
     name: "{{ student_ns }}"
   register: r_ns
 
-- name: Set compliance label fact
+- name: Check lab-status label
   ansible.builtin.set_fact:
-    compliance_label: "{{ r_ns.resources[0].metadata.labels.compliance | default('') }}"
+    lab_status: "{{ r_ns.resources[0].metadata.labels['lab-status'] | default('') }}"
   when: r_ns.resources | length > 0
 
-- name: Fail — compliance label not set
-  when: compliance_label | default('') != 'passed'
+- name: Fail — label not set
+  when: lab_status | default('') != 'complete'
   block:
     - ansible.builtin.copy:
         dest: "{{ job_info_dir }}/validation_failure.out"
         content: |
-          Compliance label not set on namespace {{ student_ns }}.
+          Label lab-status=complete not found on namespace {{ student_ns }}.
 
           Apply it:
-            oc label namespace {{ student_ns }} compliance=passed --overwrite
-
-          Then verify:
-            oc get namespace {{ student_ns }} --show-labels
+            oc label namespace {{ student_ns }} lab-status=complete --overwrite
     - ansible.builtin.fail:
-        msg: "Compliance label missing"
+        msg: "Label missing"
 
 - name: Validation passed
   ansible.builtin.debug:
-    msg: "Module 2 validation passed — compliance=passed on {{ student_ns }}"
+    msg: "Module 2 validation passed — lab-status=complete on {{ student_ns }}"
