@@ -18,7 +18,7 @@
   vars:
     showroom_ns: "showroom-{{ guid }}"
     lab_user: "devuser-{{ guid }}"
-    runner_image: "quay.io/rhpds/zerotouch-automation:v1.2.0"
+    runner_image: "{{ zt_runner_image | default('ghcr.io/prakhar1985/ocp-zt-runner:latest') }}"
 
   tasks:
 

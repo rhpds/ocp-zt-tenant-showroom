@@ -2,32 +2,15 @@
 # =============================================================================
 # runtime-automation/main.yml
 # Entry point for zerotouch-automation runner (connection: local).
-# Uses kubernetes.core to talk to OCP — no oc/kubectl needed.
+# Uses kubernetes.core to talk to OCP — pre-installed in the runner image.
 # Vars injected by runner: module_dir, module_stage, job_info_dir
+# Runner image: ghcr.io/prakhar1985/ocp-zt-runner:latest
 # =============================================================================
 
 - name: Run module stage
   hosts: localhost
   connection: local
   gather_facts: false
-
-  pre_tasks:
-    - name: Ensure kubernetes Python package is installed
-      ansible.builtin.pip:
-        name: kubernetes
-        state: present
-      changed_when: false
-
-    - name: Check if kubernetes.core collection is installed
-      ansible.builtin.stat:
-        path: "/opt/app-root/src/.ansible/collections/ansible_collections/kubernetes/core"
-      register: r_k8s_core
-
-    - name: Install kubernetes.core collection if missing
-      ansible.builtin.command:
-        cmd: ansible-galaxy collection install kubernetes.core
-      when: not r_k8s_core.stat.exists
-      changed_when: true
 
   vars:
     student_user: "{{ lookup('env', 'LAB_USER') | default('student', true) }}"
