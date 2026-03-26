@@ -1,6 +1,10 @@
 FROM quay.io/rhpds/zerotouch-automation:v1.2.0
 
-# Pre-install kubernetes Python package and kubernetes.core collection
-# so they don't need to be installed at runtime on every pod start
+USER root
+
 RUN pip install --no-cache-dir kubernetes && \
-    ansible-galaxy collection install kubernetes.core
+    ansible-galaxy collection install kubernetes.core && \
+    chmod -R g+rwX /opt/app-root/src/.ansible && \
+    chown -R 1001:0 /opt/app-root/src/.ansible
+
+USER 1001
