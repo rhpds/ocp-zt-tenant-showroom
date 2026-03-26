@@ -1,0 +1,42 @@
+= Conclusion
+:imagesdir: ../assets/images
+
+Congratulations -- you have completed the OpenShift Pipelines Zero Touch POC lab.
+
+== What you tested
+
+This lab validated all three stages of the Zero Touch grading mechanism:
+
+[cols="1,3",options="header"]
+|===
+| Stage | What it did
+
+| *Setup*
+| Auto-created your personal namespace (`zt-test-<username>`) when you entered each module
+
+| *Validate (Next)*
+| Checked for the ConfigMap, Deployment, running pod, and compliance label in your namespace
+
+| *Solve*
+| Automatically created all required resources if you clicked Solve
+|===
+
+== What was deployed
+
+By the end of this lab your OpenShift cluster had:
+
+* Namespace `zt-test-<username>` with label `compliance=passed`
+* ConfigMap `zt-test-config` with key `env=test`
+* Deployment `zt-test-app` running an nginx UBI image
+
+== Next steps for real ZT labs
+
+Now that the grading engine is confirmed working, you can build real lab content:
+
+. Replace the simple ConfigMap/Deployment exercises with actual OpenShift Pipelines steps
+. Add `setup-node01.sh` logic to pre-configure pipeline resources for students
+. Add more detailed `validation-node01.sh` checks (pipeline runs, routes, image builds)
+. Update `ui-config.yml` with additional modules as content grows
+. Update `content/antora.yml` attributes with real lab credentials
+
+For reference, all automation scripts are in `runtime-automation/`.

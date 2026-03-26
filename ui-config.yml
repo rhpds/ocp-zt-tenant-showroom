@@ -8,19 +8,21 @@ antora:
   dir: www
   modules:
     - name: module-01
-      label: "Pipeline Deployment"
+      label: "Module 1: Deploy a Workload"
       scripts:
         - setup
         - validation
         - solve
       solveButton: true
     - name: module-02
-      label: "Compliance and Security"
+      label: "Module 2: Compliance Label"
       scripts:
         - setup
         - validation
         - solve
       solveButton: true
+    - name: conclusion
+      label: "Conclusion"
 
 tabs:
   - name: OCP Console

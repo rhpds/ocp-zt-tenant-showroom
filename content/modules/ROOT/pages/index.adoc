@@ -1,116 +1,52 @@
-= OpenShift Pipelines Demo - Healthcare Deployment Automation
+= OpenShift Pipelines Zero Touch Lab
 :imagesdir: ../assets/images
 
-**Presenter Note**: This demonstration shows how Red Hat OpenShift Pipelines transforms healthcare deployment workflows from weeks to hours while maintaining strict compliance requirements.
+Welcome to this Zero Touch (ZT) hands-on lab for OpenShift.
 
-== What This Demo Covers
+This is a short proof-of-concept lab designed to exercise the Zero Touch validation engine.
+You will deploy a workload, verify it, and apply a compliance label -- all with automated
+checks after each step.
 
-This demonstration shows how OpenShift Pipelines accelerates healthcare application deployment while meeting strict regulatory requirements:
+== What you will do
 
-* **Automated CI/CD Pipelines** - Eliminate 3-week manual deployment cycles
-* **Built-in Compliance & Security** - Automated HIPAA and SOC2 policy enforcement
-* **Multi-Environment Promotion** - Safe, repeatable deployments across regions
-* **Business ROI** - 97% faster deployments, 90% fewer vulnerabilities, 5x feature velocity
+* *Module 1* -- Deploy a ConfigMap and a Deployment to your personal OpenShift namespace
+* *Module 2* -- Apply a compliance label to your namespace and verify it
 
-== Customer Scenario: HealthTech
+== How this lab works
 
-**Company**: HealthTech Inc., a virtual care platform provider
+Each module uses three automated stages:
 
-**Challenge**: Manual deployments take 3 weeks, blocking critical patient-facing features and risking regulatory compliance windows.
+Setup:: Runs *automatically* when you enter a module.
+It creates your personal namespace (`zt-test-<username>`) and prepares the environment.
+You do not need to trigger this manually.
 
-**Business Impact**:
+Next / Validate:: Click *Next* at the bottom of each module to run automated checks.
+If something is missing you will see a description of what to fix.
+Correct the issue and click *Next* again.
 
-* Development teams spend 40% of time waiting for deployments
-* Security vulnerabilities discovered too late in the process
-* Regional fragmentation complicates multi-geography deployments
-* HIPAA and SOC2 compliance requires extensive manual audits
+Solve:: Click *Solve* if you are stuck or want to skip ahead.
+The automation will complete the module steps for you.
 
-**Solution**: Red Hat OpenShift Pipelines provides Kubernetes-native CI/CD automation with built-in security and compliance features.
+[NOTE]
+====
+The *Setup* stage runs silently in the background when you load a module.
+If it is still running, wait a few seconds before starting the exercises.
+====
 
-== Demo Modules
+== Your environment
 
-This demo is structured in three parts, demonstrating progressive automation and business value:
+Use the *OCP Console* tab on the right to access the OpenShift web console.
 
-xref:01-overview.adoc[**Presenter Preparation**]::
-Complete business context, problem breakdown, and common customer questions to prepare for the demonstration.
+Open a terminal session (if available via the Terminal tab) or use the OpenShift
+web terminal to run `oc` commands.
 
-xref:03-pipeline-deployment.adoc[**Module 1: Automated Pipeline Deployment** (12-15 min)]::
-Show how OpenShift Pipelines transforms 3-week manual deployments into 2-hour automated workflows, enabling developer self-service and 5x faster feature delivery.
+First, confirm you are logged in:
 
-xref:04-compliance-security.adoc[**Module 2: Built-in Compliance & Security** (10-12 min)]::
-Demonstrate automated security scanning, policy enforcement, and compliance reporting that reduces vulnerabilities by 90% while accelerating deployments.
+[source,sh,role=execute]
+----
+oc whoami
+----
 
-xref:05-multi-environment.adoc[**Module 3: Multi-Environment & Production Confidence** (5-8 min)]::
-Show how to promote applications across dev → staging → production with approval gates, enabling safe regional deployments with consistency.
+Your personal namespace for this lab is `zt-test-<your-username>`.
 
-xref:06-conclusion.adoc[**Conclusion and Next Steps**]::
-Business impact recap, competitive advantages, next steps for evaluation and pilot programs, and comprehensive references.
-
-== Key Business Outcomes
-
-This demonstration delivers compelling proof points:
-
-* **97% faster deployments**: 3 weeks → 2 hours
-* **90% fewer vulnerabilities**: Automated security scanning vs manual audits
-* **5x feature delivery velocity**: Weekly releases instead of quarterly
-* **Zero manual provisioning**: Developer self-service eliminates tickets
-* **Automated compliance**: Policy as code for HIPAA and SOC2
-
-== Target Audience
-
-**Primary**: C-level executives (CTO, CIO) evaluating platform modernization
-
-**Secondary**: VP Engineering, Security leaders, Compliance officers
-
-**Technical**: Solution architects, DevOps engineers, Platform teams
-
-== Demo Prerequisites
-
-**OpenShift Environment**:
-
-* OpenShift 4.14 or later
-* OpenShift Pipelines Operator installed
-* Admin access to cluster console
-
-**Access Information** (provided in environment):
-
-* OpenShift Console: `{openshift_cluster_console_url}`
-* Username: `{user}`
-* Password: `{password}`
-
-== Presenter Tips
-
-**Pacing**:
-
-* Total demo time: 30-35 minutes
-* Leave 10-15 minutes for questions
-* Pause after each "wow moment" for impact
-
-**Key Messages**:
-
-* Emphasize business outcomes over technical features
-* Connect every technical capability to HealthTech's business challenges
-* Use the 3 weeks → 2 hours metric repeatedly
-* Highlight "compliance without compromise" theme
-
-**Common Objections**:
-
-* "We already have Jenkins" → Show Kubernetes-native advantages and simplified management
-* "Security scanning slows us down" → Demonstrate automated gates that accelerate without sacrificing safety
-* "Our teams aren't ready for Kubernetes" → Emphasize developer-friendly UI and abstraction
-
-**Competitive Positioning**:
-
-* Kubernetes-native (not bolted-on CI/CD like standalone Jenkins)
-* Policy enforcement built-in (vs external tools like Twistlock alone)
-* Enterprise Red Hat support (vs community-only alternatives)
-
-== Additional Resources
-
-* link:https://www.redhat.com/en/technologies/cloud-computing/openshift/pipelines[Red Hat OpenShift Pipelines Product Page^]
-* link:https://docs.openshift.com/pipelines/latest/[OpenShift Pipelines Documentation^]
-* link:https://www.redhat.com/en/resources/healthcare-industry-overview[Healthcare Solutions Overview^]
-
----
-
-**Ready to begin?** Start with xref:01-overview.adoc[Presenter Preparation] to understand the complete business context, then proceed to xref:03-pipeline-deployment.adoc[Module 1] for the demonstration.
+Click *Next* to begin Module 1.

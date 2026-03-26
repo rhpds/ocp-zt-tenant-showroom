@@ -1,0 +1,29 @@
+---
+# =============================================================================
+# setup-automation/main.yml
+# Runs at lab deploy time via AgnosticD to pre-configure the OCP cluster.
+# For this POC lab, no cluster-level pre-configuration is needed.
+# Extend this file to pre-install operators, create cluster roles, etc.
+# =============================================================================
+
+- name: Lab setup — verify OCP connectivity
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Check OCP API is reachable
+      ansible.builtin.command:
+        cmd: oc cluster-info
+      register: r_cluster
+      changed_when: false
+      ignore_errors: true
+
+    - name: Report cluster status
+      ansible.builtin.debug:
+        msg: "{{ r_cluster.stdout_lines | default(['oc not available or cluster unreachable']) }}"
+
+    # Add setup tasks here as the lab grows:
+    # - Install OpenShift Pipelines Operator
+    # - Create cluster-level RBAC
+    # - Pre-seed pipeline resources

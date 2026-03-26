@@ -1,18 +1,4 @@
-* xref:index.adoc[Demo Overview]
-
-* xref:01-overview.adoc[Presenter Preparation]
-
-* xref:03-pipeline-deployment.adoc[Module 1: Automated Pipeline Deployment]
-** xref:03-pipeline-deployment.adoc#part-1[Part 1: Creating Your First Automated Pipeline]
-** xref:03-pipeline-deployment.adoc#part-2[Part 2: Running Your Automated Pipeline]
-
-* xref:04-compliance-security.adoc[Module 2: Built-in Compliance & Security]
-** xref:04-compliance-security.adoc#part-1[Part 1: Automated Security Scanning in Pipelines]
-** xref:04-compliance-security.adoc#part-2[Part 2: Policy Enforcement and Compliance Automation]
-** xref:04-compliance-security.adoc#part-3[Part 3: Continuous Compliance Monitoring]
-
-* xref:05-multi-environment.adoc[Module 3: Multi-Environment & Production Confidence]
-** xref:05-multi-environment.adoc#part-1[Part 1: Multi-Environment Pipeline Promotion]
-** xref:05-multi-environment.adoc#part-2[Part 2: Production Confidence and Automated Rollback]
-
-* xref:06-conclusion.adoc[Conclusion and Next Steps]
+* xref:index.adoc[Lab Overview]
+* xref:module-01.adoc[Module 1: Deploy a Workload]
+* xref:module-02.adoc[Module 2: Apply a Compliance Label]
+* xref:conclusion.adoc[Conclusion]
