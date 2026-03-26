@@ -18,6 +18,17 @@
         state: present
       changed_when: false
 
+    - name: Check if kubernetes.core collection is installed
+      ansible.builtin.stat:
+        path: "/opt/app-root/src/.ansible/collections/ansible_collections/kubernetes/core"
+      register: r_k8s_core
+
+    - name: Install kubernetes.core collection if missing
+      ansible.builtin.command:
+        cmd: ansible-galaxy collection install kubernetes.core
+      when: not r_k8s_core.stat.exists
+      changed_when: true
+
   vars:
     student_user: "{{ lookup('env', 'LAB_USER') | default('student', true) }}"
     student_ns: "zt-test-{{ student_user }}"
