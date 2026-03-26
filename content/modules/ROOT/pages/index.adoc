@@ -16,22 +16,12 @@ checks after each step.
 
 Each module uses three automated stages:
 
-Setup:: Runs *automatically* when you enter a module.
-It creates your personal namespace (`zt-test-<username>`) and prepares the environment.
-You do not need to trigger this manually.
-
 Next / Validate:: Click *Next* at the bottom of each module to run automated checks.
 If something is missing you will see a description of what to fix.
 Correct the issue and click *Next* again.
 
 Solve:: Click *Solve* if you are stuck or want to skip ahead.
 The automation will complete the module steps for you.
-
-[NOTE]
-====
-The *Setup* stage runs silently in the background when you load a module.
-If it is still running, wait a few seconds before starting the exercises.
-====
 
 == Your environment
 
