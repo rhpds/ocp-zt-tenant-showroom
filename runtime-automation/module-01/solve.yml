@@ -1,6 +1,5 @@
 ---
-# Module 1 Solve — create a ConfigMap and a Secret in the student namespace
-
+# Module 1 Solve — create a ConfigMap in the student namespace
 - name: Create ConfigMap
   kubernetes.core.k8s:
     state: present
@@ -13,18 +12,6 @@
       data:
         env: test
         solved-by: zerotouch
-
-- name: Create Secret
-  kubernetes.core.k8s:
-    state: present
-    definition:
-      apiVersion: v1
-      kind: Secret
-      metadata:
-        name: zt-test-secret
-        namespace: "{{ student_ns }}"
-      stringData:
-        lab-key: zt-poc-value
 
 - name: Solve complete
   ansible.builtin.debug:

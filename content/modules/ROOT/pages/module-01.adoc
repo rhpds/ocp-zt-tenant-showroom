@@ -1,18 +1,14 @@
-= Module 1: Create Resources in Your Namespace
+= Module 1: Create a ConfigMap
 :imagesdir: ../assets/images
 
-In this module you will create a ConfigMap and a Secret in your pre-assigned namespace.
+In this module you will create a ConfigMap in your pre-assigned namespace.
 
-== Exercise 1: Find your namespace in the OCP Console
+== Exercise 1: Find your namespace
 
-. In the *OCP Console* tab, switch to the *Developer* perspective (top-left switcher).
+. In the *OCP Console* tab, switch to the *Developer* perspective.
+. Click the *Project* dropdown and select `zt-test-<your-username>`.
 
-. Click the *Project* dropdown and search for `zt-test`.
-Select `zt-test-<your-username>`.
-
-. Click *Config Maps* and *Secrets* in the left navigation — both are currently empty.
-
-== Exercise 2: Create the ConfigMap and Secret
+== Exercise 2: Create the ConfigMap
 
 . Set your namespace variable:
 +
@@ -31,27 +27,18 @@ oc create configmap zt-test-config \
   -n $NS
 ----
 
-. Create the Secret:
-+
-[source,sh,role=execute]
-----
-oc create secret generic zt-test-secret \
-  --from-literal=lab-key=zt-poc-value \
-  -n $NS
-----
-
 == Verify
 
 [source,sh,role=execute]
 ----
-oc get configmap,secret -n $NS | grep zt-test
+oc get configmap zt-test-config -n $NS
 ----
 
 .Expected output
 [source,texinfo]
 ----
-configmap/zt-test-config   1      5s
-secret/zt-test-secret      1      3s
+NAME              DATA   AGE
+zt-test-config    1      5s
 ----
 
 Click *Next* to validate your work.

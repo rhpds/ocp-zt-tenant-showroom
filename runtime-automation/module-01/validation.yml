@@ -1,6 +1,5 @@
 ---
-# Module 1 Validation — check ConfigMap and Secret exist
-
+# Module 1 Validation — check ConfigMap exists
 - name: Check ConfigMap exists
   kubernetes.core.k8s_info:
     api_version: v1
@@ -23,29 +22,6 @@
               -n {{ student_ns }}
     - ansible.builtin.fail:
         msg: "ConfigMap missing"
-
-- name: Check Secret exists
-  kubernetes.core.k8s_info:
-    api_version: v1
-    kind: Secret
-    name: zt-test-secret
-    namespace: "{{ student_ns }}"
-  register: r_secret
-
-- name: Fail — Secret not found
-  when: r_secret.resources | length == 0
-  block:
-    - ansible.builtin.copy:
-        dest: "{{ job_info_dir }}/validation_failure.out"
-        content: |
-          Secret zt-test-secret not found in {{ student_ns }}.
-
-          Create it:
-            oc create secret generic zt-test-secret \
-              --from-literal=lab-key=zt-poc-value \
-              -n {{ student_ns }}
-    - ansible.builtin.fail:
-        msg: "Secret missing"
 
 - name: Validation passed
   ansible.builtin.debug:
