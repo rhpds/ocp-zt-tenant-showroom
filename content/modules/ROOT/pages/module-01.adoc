@@ -48,7 +48,7 @@ oc create configmap zt-test-config \
 [source,sh,role=execute]
 ----
 oc create deployment zt-test-app \
-  --image=registry.access.redhat.com/ubi9/nginx-122:latest \
+  --image=registry.access.redhat.com/ubi8/httpd-24:latest \
   -n $NS
 ----
 
