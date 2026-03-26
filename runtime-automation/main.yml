@@ -1,84 +1,16 @@
 ---
 # =============================================================================
 # runtime-automation/main.yml
-# Ansible playbook called by zerotouch-automation for every button click.
-# Accepts: module_dir, module_stage, script_executions, job_info_dir
+# Entry point for ansible-runner in the nookbag-sidecar container.
+# Runs locally inside the pod — no SSH needed.
+# Vars injected by sidecar: module_dir, module_stage, job_info_dir
 # =============================================================================
 
-- name: Runtime Automation — setup inventory
+- name: Run module stage
   hosts: localhost
+  connection: local
   gather_facts: false
-  tasks:
-    - name: Add student host to inventory
-      ansible.builtin.add_host:
-        name: student-host
-        ansible_host: "{{ lookup('env', 'BASTION_HOST') }}"
-        ansible_port: "{{ lookup('env', 'BASTION_PORT') | default('22') }}"
-        ansible_user: "{{ lookup('env', 'ANSIBLE_USER') | default('lab-user') }}"
-        ansible_password: "{{ lookup('env', 'ANSIBLE_PASSWORD') }}"
-        ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
-
-- name: Runtime Automation — execute module script
-  hosts: student-host
-  gather_facts: false
-  vars:
-    scripts_base: "/tmp/runtime-scripts"
 
   tasks:
-    - name: Create scripts directory on host
-      ansible.builtin.file:
-        path: "{{ scripts_base }}/{{ module_dir }}"
-        state: directory
-        mode: "0755"
-
-    - name: Install fail_validation helper
-      ansible.builtin.copy:
-        dest: "{{ scripts_base }}/{{ module_dir }}/env.validation.sh"
-        mode: "0644"
-        content: |
-          fail_validation() {
-            echo "= FAIL VALIDATION BEGIN"
-            if [ "$1" = "-" ] || { [ -z "$*" ] && [ ! -t 0 ]; }; then
-              while IFS= read -r LINE; do echo "$LINE"; done
-            elif [ -n "$*" ]; then
-              printf '%s\n' "$@"
-            fi
-            echo "= FAIL VALIDATION END"
-            return 1
-          }
-
-    - name: Copy script to host
-      ansible.builtin.copy:
-        src: "./{{ module_dir }}/{{ module_stage }}-node01.sh"
-        dest: "{{ scripts_base }}/{{ module_dir }}/{{ module_stage }}-node01.sh"
-        mode: "0755"
-      when: module_stage is defined
-
-    - name: Execute script
-      ansible.builtin.shell: |
-        set -e
-        [ -f {{ scripts_base }}/{{ module_dir }}/env.validation.sh ] && \
-          . {{ scripts_base }}/{{ module_dir }}/env.validation.sh
-        . {{ scripts_base }}/{{ module_dir }}/{{ module_stage }}-node01.sh
-      register: r_result
-      failed_when: false
-
-    - name: Extract validation failure
-      when: "'= FAIL VALIDATION BEGIN' in (r_result.stdout | default(''))"
-      ansible.builtin.set_fact:
-        validation_failure: >-
-          {{ (r_result.stdout | default(''))
-            | regex_replace('(?ms).*^= FAIL VALIDATION BEGIN\n', '')
-            | regex_replace('(?ms)\n?= FAIL VALIDATION END.*', '')
-          }}
-
-    - name: Write validation failure to file
-      when: validation_failure is defined
-      ansible.builtin.copy:
-        dest: "{{ job_info_dir | default('/tmp') }}/validation_failure.out"
-        content: "{{ validation_failure }}"
-
-    - name: Fail if script exited non-zero
-      when: r_result.rc | default(0) != 0
-      ansible.builtin.fail:
-        msg: "Script exited with rc={{ r_result.rc }}"
+    - name: Run {{ module_stage }} for {{ module_dir }}
+      ansible.builtin.include_tasks: "{{ module_dir }}/{{ module_stage }}.yml"

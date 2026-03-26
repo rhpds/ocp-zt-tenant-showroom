@@ -1,0 +1,24 @@
+---
+# Module 1 Setup — runs automatically when student enters the module
+- name: Get student username
+  ansible.builtin.command: oc whoami
+  register: r_whoami
+  changed_when: false
+
+- name: Set student namespace fact
+  ansible.builtin.set_fact:
+    student_ns: "zt-test-{{ r_whoami.stdout | trim }}"
+
+- name: Create student namespace if it does not exist
+  ansible.builtin.command: oc new-project {{ student_ns }}
+  register: r_ns
+  changed_when: r_ns.rc == 0
+  failed_when: r_ns.rc != 0 and 'AlreadyExists' not in r_ns.stderr
+
+- name: Label namespace
+  ansible.builtin.command: oc label namespace {{ student_ns }} lab=zt-test --overwrite
+  changed_when: true
+
+- name: Report setup complete
+  ansible.builtin.debug:
+    msg: "Setup complete. Namespace {{ student_ns }} is ready."
