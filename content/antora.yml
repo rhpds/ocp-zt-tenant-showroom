@@ -6,17 +6,9 @@ nav:
 
 asciidoc:
   attributes:
-    lab_name: "OpenShift Pipelines Demo - Healthcare Deployment Automation"
+    lab_name: "OpenShift Pipelines — ZT Lab"
     release-version: master
     page-pagination: true
-    # Fake placeholder values for GitHub Pages rendering
-    # DO NOT use real credentials here
-    bastion_public_hostname: bastion.example.redhatworkshops.io
-    bastion_ssh_user_name: demo-user
-    bastion_ssh_password: changeme123
-    bastion_ssh_port: 22
-    openshift_console_url: https://console-openshift-console.apps.cluster-demo.redhatworkshops.io
-    openshift_kubeadmin_password: demo-password-12345
     page-links:
     - url: https://redhat.com
       text: Red Hat

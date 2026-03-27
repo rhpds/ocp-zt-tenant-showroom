@@ -30,8 +30,5 @@ tabs:
   - name: OCP Console
     url: 'https://console-openshift-console.${DOMAIN}'
     external: false
-  - name: Terminal
-    url: /terminal
-    type: terminal
 
 skipModuleEnabled: true

@@ -3,40 +3,37 @@
 
 Welcome to this Zero Touch (ZT) hands-on lab for OpenShift.
 
-This is a short proof-of-concept lab designed to exercise the Zero Touch validation engine.
-You will deploy a workload, verify it, and apply a compliance label -- all with automated
-checks after each step.
+== Your credentials
+
+[cols="1,2",options="header"]
+|===
+| Item | Value
+
+| *OCP Console*
+| {openshift_console_url}
+
+| *Username*
+| {user}
+
+| *Password*
+| {password}
+
+| *Your namespace*
+| {user}-zttest
+|===
+
+Use the *OCP Console* tab on the right to log in.
 
 == What you will do
 
-* *Module 1* -- Deploy a ConfigMap and a Deployment to your personal OpenShift namespace
-* *Module 2* -- Apply a compliance label to your namespace and verify it
+* *Module 1* — Create a ConfigMap in your namespace `{user}-zttest`
+* *Module 2* — Apply a label `lab-status=complete` to your namespace
 
 == How this lab works
 
-Each module uses three automated stages:
-
 Next / Validate:: Click *Next* at the bottom of each module to run automated checks.
-If something is missing you will see a description of what to fix.
-Correct the issue and click *Next* again.
+If something is wrong you will see a description of what to fix.
 
-Solve:: Click *Solve* if you are stuck or want to skip ahead.
-The automation will complete the module steps for you.
+Solve:: Click *Solve* if you are stuck. The automation completes the steps for you.
 
-== Your environment
-
-Use the *OCP Console* tab on the right to access the OpenShift web console.
-
-Open a terminal session (if available via the Terminal tab) or use the OpenShift
-web terminal to run `oc` commands.
-
-First, confirm you are logged in:
-
-[source,sh,role=execute]
-----
-oc whoami
-----
-
-Your personal namespace for this lab is `zt-test-<your-username>`.
-
-Click *Next* to begin Module 1.
+Click *Next* to begin.
