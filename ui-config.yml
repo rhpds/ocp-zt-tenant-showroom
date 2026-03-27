@@ -1,7 +1,9 @@
 ---
 type: zero-touch
 
-default_width: 30
+# Split view: 35% lab guide left, 65% OCP Console right
+default_width: 35
+persist_url_state: true
 
 antora:
   name: modules
@@ -27,5 +29,9 @@ antora:
 tabs:
   - name: OCP Console
     url: 'https://console-openshift-console.${DOMAIN}'
+    external: false
+  - name: Terminal
+    url: /terminal
+    type: terminal
 
 skipModuleEnabled: true
