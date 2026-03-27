@@ -2,6 +2,9 @@
 # Module 2 Solve — add a label to the student namespace and create a ConfigMap
 - name: Apply lab-status label to namespace
   kubernetes.core.k8s:
+    host: "{{ k8s_host }}"
+    api_key: "{{ k8s_token }}"
+    validate_certs: false
     state: patched
     definition:
       apiVersion: v1

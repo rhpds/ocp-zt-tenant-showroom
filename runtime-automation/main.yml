@@ -2,9 +2,9 @@
 # =============================================================================
 # runtime-automation/main.yml
 # Entry point for zerotouch-automation runner (connection: local).
-# Uses kubernetes.core to talk to OCP — pre-installed in the runner image.
-# Vars injected by runner: module_dir, module_stage, job_info_dir
-# Runner image: ghcr.io/prakhar1985/ocp-zt-runner:latest
+# Reads showroom-userdata ConfigMap to get student credentials,
+# gets an OCP OAuth token, and uses it for all kubernetes.core calls.
+# No RBAC role needed — student already has admin on their namespace.
 # =============================================================================
 
 - name: Run module stage
@@ -12,10 +12,46 @@
   connection: local
   gather_facts: false
 
+  pre_tasks:
+    - name: Read showroom-userdata ConfigMap via SA token
+      ansible.builtin.uri:
+        url: >-
+          https://kubernetes.default.svc/api/v1/namespaces/{{
+            lookup('env', 'GUID') | default('unknown')
+          }}-showroom/configmaps/showroom-userdata
+        headers:
+          Authorization: "Bearer {{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+        validate_certs: false
+        status_code: 200
+      register: r_userdata
+
+    - name: Parse user data
+      ansible.builtin.set_fact:
+        _userdata: "{{ r_userdata.json.data['user_data.yml'] | from_yaml }}"
+
+    - name: Get OCP OAuth token using student credentials
+      ansible.builtin.uri:
+        url: >-
+          https://oauth-openshift.{{ _userdata.openshift_cluster_ingress_domain
+          }}/oauth/authorize?response_type=token&client_id=openshift-challenging-client
+        user: "{{ _userdata.user }}"
+        password: "{{ _userdata.password }}"
+        force_basic_auth: true
+        validate_certs: false
+        follow_redirects: none
+        status_code: [301, 302]
+      register: r_oauth
+
+    - name: Extract OAuth token
+      ansible.builtin.set_fact:
+        _ocp_token: >-
+          {{ r_oauth.location | regex_search('access_token=([^&]+)', '\1') | first }}
+
   vars:
-    student_user: "{{ lookup('env', 'LAB_USER') | default('student', true) }}"
-    # Namespace format from ocp4_workload_tenant_namespace main branch: {username}-{suffix}
-    student_ns: "{{ student_user }}-zttest"
+    student_user: "{{ _userdata.user }}"
+    student_ns: "{{ _userdata.user }}-zttest"
+    k8s_host: "https://kubernetes.default.svc"
+    k8s_token: "{{ _ocp_token }}"
 
   tasks:
     - name: "Run {{ module_stage }} for {{ module_dir }}"

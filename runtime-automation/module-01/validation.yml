@@ -2,6 +2,9 @@
 # Module 1 Validation — check ConfigMap exists
 - name: Check ConfigMap exists
   kubernetes.core.k8s_info:
+    host: "{{ k8s_host }}"
+    api_key: "{{ k8s_token }}"
+    validate_certs: false
     api_version: v1
     kind: ConfigMap
     name: zt-test-config

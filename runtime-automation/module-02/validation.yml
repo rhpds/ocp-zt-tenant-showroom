@@ -2,6 +2,9 @@
 # Module 2 Validation — check lab-status=complete label on namespace
 - name: Get namespace
   kubernetes.core.k8s_info:
+    host: "{{ k8s_host }}"
+    api_key: "{{ k8s_token }}"
+    validate_certs: false
     api_version: v1
     kind: Namespace
     name: "{{ student_ns }}"
