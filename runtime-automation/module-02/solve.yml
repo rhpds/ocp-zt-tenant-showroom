@@ -1,15 +1,17 @@
 ---
-# Module 2 Solve — add a label to the student namespace and create a ConfigMap
-- name: Apply lab-status label to namespace
+# Module 2 Solve — create a Secret in student namespace
+- name: Create lab-status Secret
   kubernetes.core.k8s:
-    state: patched
+    state: present
     definition:
       apiVersion: v1
-      kind: Namespace
+      kind: Secret
       metadata:
-        name: "{{ student_ns }}"
-        labels:
-          lab-status: complete
+        name: lab-status
+        namespace: "{{ student_ns }}"
+      stringData:
+        status: complete
+        module: "2"
 
 - name: Solve complete
   ansible.builtin.debug:

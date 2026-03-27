@@ -1,30 +1,28 @@
 ---
-# Module 2 Validation — check lab-status=complete label on namespace
-- name: Get namespace
+# Module 2 Validation — check lab-status Secret exists
+- name: Check lab-status Secret exists
   kubernetes.core.k8s_info:
     api_version: v1
-    kind: Namespace
-    name: "{{ student_ns }}"
-  register: r_ns
+    kind: Secret
+    name: lab-status
+    namespace: "{{ student_ns }}"
+  register: r_secret
 
-- name: Check lab-status label
-  ansible.builtin.set_fact:
-    lab_status: "{{ r_ns.resources[0].metadata.labels['lab-status'] | default('') }}"
-  when: r_ns.resources | length > 0
-
-- name: Fail — label not set
-  when: lab_status | default('') != 'complete'
+- name: Fail — lab-status Secret not found
+  when: r_secret.resources | length == 0
   block:
     - ansible.builtin.copy:
         dest: "{{ job_info_dir }}/validation_failure.out"
         content: |
-          Label lab-status=complete not found on namespace {{ student_ns }}.
+          Secret lab-status not found in {{ student_ns }}.
 
-          Apply it:
-            oc label namespace {{ student_ns }} lab-status=complete --overwrite
+          Create it:
+            oc create secret generic lab-status \
+              --from-literal=status=complete \
+              -n {{ student_ns }}
     - ansible.builtin.fail:
-        msg: "Label missing"
+        msg: "lab-status Secret missing"
 
 - name: Validation passed
   ansible.builtin.debug:
-    msg: "Module 2 validation passed — lab-status=complete on {{ student_ns }}"
+    msg: "Module 2 validation passed — lab-status Secret exists in {{ student_ns }}"

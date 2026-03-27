@@ -1,46 +1,52 @@
-= Module 2: Label Your Namespace
+= Module 2: Create a Secret
 :imagesdir: ../assets/images
 
-In this module you will apply a label to your namespace to mark the lab as complete.
+In this module you will create a `lab-status` Secret in your namespace.
 
-== Exercise 1: View current namespace labels in the OCP Console
+== Your access
 
-. In the *OCP Console* tab, switch to the *Administrator* perspective.
+[cols="1,2",options="header"]
+|===
+| Item | Value
 
-. Go to *Home* -> *Projects* and click on `zt-test-<your-username>`.
+| *Username*
+| {user}
 
-. On the *Details* tab, find the *Labels* section.
-Note that `lab-status` is not set yet.
+| *Your namespace*
+| {user}-zttest
+|===
 
-== Exercise 2: Apply the label
+== Exercise: Create the Secret
 
-. Set your namespace variable (if needed):
+. Set your namespace variable:
 +
 [source,sh,role=execute]
 ----
-export NS=zt-test-$(oc whoami)
+export NS=$(oc whoami)-zttest
+echo "Using namespace: $NS"
 ----
 
-. Apply the label:
+. Create the Secret:
 +
 [source,sh,role=execute]
 ----
-oc label namespace $NS lab-status=complete --overwrite
+oc create secret generic lab-status \
+  --from-literal=status=complete \
+  -n $NS
 ----
 
 == Verify
 
 [source,sh,role=execute]
 ----
-oc get namespace $NS --show-labels | grep lab-status
+oc get secret lab-status -n $NS
 ----
 
 .Expected output
 [source,texinfo]
 ----
-zt-test-devuser-poc   Active   ...   lab-status=complete,...
+NAME         TYPE     DATA   AGE
+lab-status   Opaque   2      5s
 ----
-
-You can also refresh the OCP Console project details page — the `lab-status=complete` label will appear.
 
 Click *Next* to validate your work.
