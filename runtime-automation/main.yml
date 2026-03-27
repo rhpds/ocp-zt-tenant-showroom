@@ -2,9 +2,10 @@
 # =============================================================================
 # runtime-automation/main.yml
 # Entry point for zerotouch-automation runner (connection: local).
-# Reads showroom-userdata ConfigMap to get student credentials,
-# gets an OCP OAuth token, and uses it for all kubernetes.core calls.
-# No RBAC role needed — student already has admin on their namespace.
+# 1. Reads showroom-userdata ConfigMap (SA token → own namespace)
+# 2. oc login as student user — handles RHBK OAuth redirect chain
+# 3. All kubernetes.core tasks use student kubeconfig → scoped to student namespace
+# No RBAC role needed — student is already admin of their namespace.
 # =============================================================================
 
 - name: Run module stage
@@ -29,31 +30,21 @@
       ansible.builtin.set_fact:
         _userdata: "{{ r_userdata.json.data['user_data.yml'] | from_yaml }}"
 
-    - name: Get OCP OAuth token using student credentials
-      ansible.builtin.uri:
-        url: >-
-          https://oauth-openshift.{{ _userdata.openshift_cluster_ingress_domain
-          }}/oauth/authorize?response_type=token&client_id=openshift-challenging-client
-        user: "{{ _userdata.user }}"
-        password: "{{ _userdata.password }}"
-        force_basic_auth: true
-        validate_certs: false
-        follow_redirects: none
-        headers:
-          X-CSRF-Token: required
-        status_code: [301, 302]
-      register: r_oauth
-
-    - name: Extract OAuth token
-      ansible.builtin.set_fact:
-        _ocp_token: >-
-          {{ r_oauth.location | regex_search('access_token=([^&]+)', '\1') | first }}
+    - name: Login to OCP as student user via oc
+      ansible.builtin.command:
+        cmd: >-
+          oc login {{ _userdata.openshift_api_url }}
+          --username={{ _userdata.user }}
+          --password={{ _userdata.password }}
+          --insecure-skip-tls-verify=true
+          --kubeconfig=/tmp/student-kubeconfig
+      changed_when: true
+      no_log: true
 
   vars:
     student_user: "{{ _userdata.user }}"
     student_ns: "{{ _userdata.user }}-zttest"
-    k8s_host: "https://kubernetes.default.svc"
-    k8s_token: "{{ _ocp_token }}"
+    k8s_kubeconfig: "/tmp/student-kubeconfig"
 
   tasks:
     - name: "Run {{ module_stage }} for {{ module_dir }}"

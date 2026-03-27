@@ -2,9 +2,7 @@
 # Module 2 Setup — verify student namespace and module-01 resources exist
 - name: Check ConfigMap exists (module-01 baseline)
   kubernetes.core.k8s_info:
-    host: "{{ k8s_host }}"
-    api_key: "{{ k8s_token }}"
-    validate_certs: false
+    kubeconfig: "{{ k8s_kubeconfig }}"
     api_version: v1
     kind: ConfigMap
     name: zt-test-config
@@ -14,9 +12,7 @@
 - name: Create ConfigMap if missing
   when: r_cm.resources | length == 0
   kubernetes.core.k8s:
-    host: "{{ k8s_host }}"
-    api_key: "{{ k8s_token }}"
-    validate_certs: false
+    kubeconfig: "{{ k8s_kubeconfig }}"
     state: present
     definition:
       apiVersion: v1

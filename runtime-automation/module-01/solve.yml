@@ -2,9 +2,7 @@
 # Module 1 Solve — create a ConfigMap in the student namespace
 - name: Create ConfigMap
   kubernetes.core.k8s:
-    host: "{{ k8s_host }}"
-    api_key: "{{ k8s_token }}"
-    validate_certs: false
+    kubeconfig: "{{ k8s_kubeconfig }}"
     state: present
     definition:
       apiVersion: v1

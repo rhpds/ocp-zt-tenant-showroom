@@ -2,6 +2,11 @@ FROM quay.io/rhpds/zerotouch-automation:v1.2.0
 
 USER root
 
+# ── OpenShift CLI (oc) — for oc login to handle RHBK OAuth redirect chain ───
+RUN curl -sL https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-client-linux.tar.gz \
+    | tar -xz -C /usr/local/bin oc kubectl && \
+    chmod +x /usr/local/bin/oc /usr/local/bin/kubectl
+
 # ── Python packages needed by collections and validation tasks ───────────────
 # Note: Keep ansible-core at base image version (2.18.5) for collection compatibility
 RUN pip install --no-cache-dir \
