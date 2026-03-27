@@ -39,6 +39,8 @@
         force_basic_auth: true
         validate_certs: false
         follow_redirects: none
+        headers:
+          X-CSRF-Token: required
         status_code: [301, 302]
       register: r_oauth
 
