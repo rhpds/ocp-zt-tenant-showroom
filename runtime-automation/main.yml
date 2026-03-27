@@ -17,8 +17,8 @@
       ansible.builtin.uri:
         url: >-
           https://kubernetes.default.svc/api/v1/namespaces/{{
-            lookup('env', 'GUID') | default('unknown')
-          }}-showroom/configmaps/showroom-userdata
+            lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/namespace')
+          }}/configmaps/showroom-userdata
         headers:
           Authorization: "Bearer {{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
         validate_certs: false
