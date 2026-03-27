@@ -2,9 +2,30 @@ FROM quay.io/rhpds/zerotouch-automation:v1.2.0
 
 USER root
 
-RUN pip install --no-cache-dir kubernetes && \
-    ansible-galaxy collection install kubernetes.core && \
-    chmod -R g+rwX /opt/app-root/src/.ansible && \
+# ── Python packages needed by collections and validation tasks ───────────────
+# Note: Keep ansible-core at base image version (2.18.5) for collection compatibility
+RUN pip install --no-cache-dir \
+    kubernetes \
+    jmespath \
+    netaddr \
+    hvac \
+    pyOpenSSL \
+    cryptography \
+    passlib \
+    boto3 \
+    botocore \
+    requests
+
+# ── Ansible Collections ───────────────────────────────────────────────────────
+# Install in separate RUN layers for better cache utilisation
+RUN ansible-galaxy collection install kubernetes.core ansible.posix community.general
+
+RUN ansible-galaxy collection install community.crypto community.hashi_vault ansible.netcommon
+
+RUN ansible-galaxy collection install community.mysql community.postgresql
+
+# ── Fix permissions for OpenShift random UID (gid=0 must be able to write) ──
+RUN chmod -R g+rwX /opt/app-root/src/.ansible && \
     chown -R 1001:0 /opt/app-root/src/.ansible
 
 USER 1001
