@@ -2,7 +2,6 @@
 # Module 2 Solve — add a label to the student namespace and create a ConfigMap
 - name: Apply lab-status label to namespace
   kubernetes.core.k8s:
-    kubeconfig: "{{ k8s_kubeconfig }}"
     state: patched
     definition:
       apiVersion: v1

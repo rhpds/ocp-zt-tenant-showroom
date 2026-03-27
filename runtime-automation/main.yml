@@ -2,10 +2,8 @@
 # =============================================================================
 # runtime-automation/main.yml
 # Entry point for zerotouch-automation runner (connection: local).
-# 1. Reads showroom-userdata ConfigMap (SA token → own namespace)
-# 2. oc login as student user — handles RHBK OAuth redirect chain
-# 3. All kubernetes.core tasks use student kubeconfig → scoped to student namespace
-# No RBAC role needed — student is already admin of their namespace.
+# Uses kubernetes.core with pod's SA token — showroom SA has RoleBinding
+# in student namespace (granted by rhpds.loadtester.zt_runner_ocp role).
 # =============================================================================
 
 - name: Run module stage
@@ -14,7 +12,7 @@
   gather_facts: false
 
   pre_tasks:
-    - name: Read showroom-userdata ConfigMap via SA token
+    - name: Read showroom-userdata ConfigMap
       ansible.builtin.uri:
         url: >-
           https://kubernetes.default.svc/api/v1/namespaces/{{
@@ -30,21 +28,10 @@
       ansible.builtin.set_fact:
         _userdata: "{{ r_userdata.json.data['user_data.yml'] | from_yaml }}"
 
-    - name: Login to OCP as student user via oc
-      ansible.builtin.command:
-        cmd: >-
-          oc login {{ _userdata.openshift_api_url }}
-          --username={{ _userdata.user }}
-          --password={{ _userdata.password }}
-          --insecure-skip-tls-verify=true
-          --kubeconfig=/tmp/student-kubeconfig
-      changed_when: true
-      no_log: true
-
   vars:
     student_user: "{{ _userdata.user }}"
     student_ns: "{{ _userdata.user }}-zttest"
-    k8s_kubeconfig: "/tmp/student-kubeconfig"
+    k8s_kubeconfig: ""
 
   tasks:
     - name: "Run {{ module_stage }} for {{ module_dir }}"
