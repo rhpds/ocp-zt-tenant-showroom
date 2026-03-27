@@ -15,7 +15,7 @@
   vars:
     student_user: "{{ lookup('env', 'LAB_USER') | default('student', true) }}"
     # Namespace format from ocp4_workload_tenant_namespace main branch: {username}-{suffix}
-    student_ns: "{{ student_user }}-zt-test"
+    student_ns: "{{ student_user }}-zttest"
 
   tasks:
     - name: "Run {{ module_stage }} for {{ module_dir }}"
