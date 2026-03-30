@@ -29,10 +29,11 @@
         namespace: "{{ student_ns }}"
       register: r_cm
 
-    - name: Fail if ConfigMap missing
-      when: r_cm.resources | length == 0
-      lab_check_fail:
-        msg: |
+    - name: Validate ConfigMap
+      validation_check:
+        check: "{{ r_cm.resources | length > 0 }}"
+        pass_msg: "ConfigMap zt-test-config exists in {{ student_ns }}"
+        error_msg: |
           ConfigMap zt-test-config not found in {{ student_ns }}.
 
           Create it:

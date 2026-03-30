@@ -1,5 +1,5 @@
 ---
-- name: Module 2 Validation -- check lab-status Secret in ztworkspace
+- name: Module 2 Validation — check Secret in ztworkspace
   hosts: localhost
   connection: local
   gather_facts: false
@@ -19,10 +19,9 @@
 
     - name: Parse user data
       ansible.builtin.set_fact:
-        student_user: "{{ (r_userdata.json.data['user_data.yml'] | from_yaml).user }}"
         student_ns2: "{{ (r_userdata.json.data['user_data.yml'] | from_yaml).user }}-ztworkspace"
 
-    - name: Check lab-status Secret in ztworkspace
+    - name: Check Secret exists
       kubernetes.core.k8s_info:
         api_version: v1
         kind: Secret
@@ -30,10 +29,11 @@
         namespace: "{{ student_ns2 }}"
       register: r_secret
 
-    - name: Fail if Secret missing
-      when: r_secret.resources | length == 0
-      lab_check_fail:
-        msg: |
+    - name: Validate Secret
+      validation_check:
+        check: "{{ r_secret.resources | length > 0 }}"
+        pass_msg: "Secret lab-status exists in {{ student_ns2 }}"
+        error_msg: |
           Secret lab-status not found in {{ student_ns2 }}.
 
           Create it:
