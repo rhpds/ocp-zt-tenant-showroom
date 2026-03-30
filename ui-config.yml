@@ -12,15 +12,17 @@ antora:
   name: modules
   dir: www
   modules:
+    - name: index
+      label: "Welcome"
     - name: module-01
-      label: "Module 1: Deploy a Workload"
+      label: "Module 1: Create a ConfigMap"
       scripts:
         - setup
         - validation
         - solve
       solveButton: true
     - name: module-02
-      label: "Module 2: Compliance Label"
+      label: "Module 2: Create a Secret"
       scripts:
         - setup
         - validation
