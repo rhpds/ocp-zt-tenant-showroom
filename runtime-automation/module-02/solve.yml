@@ -1,5 +1,5 @@
 ---
-- name: Module 2 Solve — create lab-status Secret
+- name: Module 2 Solve -- create lab-status Secret in ztworkspace namespace
   hosts: localhost
   connection: local
   gather_facts: false
@@ -19,9 +19,10 @@
 
     - name: Parse user data
       ansible.builtin.set_fact:
-        student_ns: "{{ (r_userdata.json.data['user_data.yml'] | from_yaml).user }}-zttest"
+        student_user: "{{ (r_userdata.json.data['user_data.yml'] | from_yaml).user }}"
+        student_ns2: "{{ (r_userdata.json.data['user_data.yml'] | from_yaml).user }}-ztworkspace"
 
-    - name: Create lab-status Secret
+    - name: Create lab-status Secret in ztworkspace
       kubernetes.core.k8s:
         state: present
         definition:
@@ -29,7 +30,7 @@
           kind: Secret
           metadata:
             name: lab-status
-            namespace: "{{ student_ns }}"
+            namespace: "{{ student_ns2 }}"
           stringData:
             status: complete
             module: "2"
