@@ -1,45 +1,33 @@
 = Conclusion
 :imagesdir: ../assets/images
 
-Congratulations — you have completed the OpenShift Pipelines Zero Touch POC lab.
+Congratulations -- you have completed the Zero Touch OCP lab!
 
-== What was validated
+== What was tested
 
-This lab confirmed all three stages of the Zero Touch grading engine work end-to-end:
-
-[cols="1,3",options="header"]
+[cols="1,2,1",options="header"]
 |===
-| Stage | What it did
+| Module | Task | Namespace
 
-| *Setup (auto)*
-| Verified your pre-created namespace `zt-test-<username>` exists when you entered each module
+| *Module 1*
+| Created ConfigMap `zt-test-config`
+| `{user}-zttest`
 
-| *Validate (Next)*
-| Checked for the ConfigMap in Module 1, and the `lab-status=complete` label in Module 2
-
-| *Solve*
-| Automatically created the ConfigMap and applied the namespace label using `kubernetes.core` Ansible modules
+| *Module 2*
+| Created Secret `lab-status`
+| `{user}-ztworkspace`
 |===
 
-== How the runner works
+== How the ZT grader worked
 
-The ZT validation runs inside a `zerotouch-automation` container (runner) co-located in the showroom pod.
+When you clicked *Validate*, the ZT runner:
 
-* Runner image: `ghcr.io/prakhar1985/ocp-zt-runner:latest`
-* Based on `quay.io/rhpds/zerotouch-automation:v1.2.0` with `kubernetes.core` pre-installed
-* Communicates with OCP via the pod's service account token — no `oc` binary needed
-* Exposes a FastAPI on port 8501, routed through nginx at `/runner/`
-* Playbooks live in `runtime-automation/` in this repo
+. Read your credentials from the showroom-userdata ConfigMap
+. Used `kubernetes.core` to check for the required resource in your namespace
+. Reported pass or fail back to this UI
 
-== Next steps for real ZT labs
+When you clicked *Solve*, the runner created the resource for you automatically.
 
-Now that the grading engine is confirmed working, build real lab content by:
+== Next steps
 
-. Replacing the ConfigMap/label exercises with actual OpenShift Pipelines steps
-. Updating `setup.yml` to pre-configure pipeline resources for students
-. Adding detailed `validation.yml` checks (pipeline runs, routes, image builds)
-. Updating `ui-config.yml` with additional modules as content grows
-. Updating `content/antora.yml` attributes with real lab credentials
-. Tagging and versioning the runner image for production use
-
-All automation is in `runtime-automation/` — each module has `setup.yml`, `solve.yml`, and `validation.yml`.
+This was a POC lab to validate the Zero Touch grading engine. Real labs replace these simple exercises with actual OpenShift Pipelines, RHEL administration, or AAP configuration tasks.

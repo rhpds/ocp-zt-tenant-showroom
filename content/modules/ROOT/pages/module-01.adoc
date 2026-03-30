@@ -1,45 +1,16 @@
 = Module 1: Create a ConfigMap
 :imagesdir: ../assets/images
 
-In this module you will create a ConfigMap in your pre-assigned namespace.
+In this module you will create a ConfigMap in your first namespace `{user}-zttest`.
 
-== Your access
+== Exercise: Create the ConfigMap
 
-[cols="1,2",options="header"]
-|===
-| Item | Value
-
-| *Username*
-| {user}
-
-| *Password*
-| {password}
-
-| *Your namespace*
-| {user}-zttest
-|===
-
-== Exercise 1: Log in to OCP and find your namespace
-
-. In the *OCP Console* tab, log in with `{user}` / `{password}`.
-. Switch to the *Developer* perspective (top-left switcher).
-. Click the *Project* dropdown and select `{user}-zttest`.
-
-== Exercise 2: Create the ConfigMap
-
-. Log in to OCP from the command line:
+. Log in to OCP and set your namespace variable:
 +
 [source,sh,role=execute]
 ----
-oc login {openshift_console_url} -u {user} -p {password} --insecure-skip-tls-verify
-----
-
-. Set your namespace variable:
-+
-[source,sh,role=execute]
-----
-export NS=$(oc whoami)-zttest
-echo "Using namespace: $NS"
+export NS={user}-zttest
+echo "Working in namespace: $NS"
 ----
 
 . Create the ConfigMap:
@@ -51,7 +22,7 @@ oc create configmap zt-test-config \
   -n $NS
 ----
 
-== Verify
+=== Verify
 
 [source,sh,role=execute]
 ----
@@ -64,5 +35,11 @@ oc get configmap zt-test-config -n $NS
 NAME              DATA   AGE
 zt-test-config    1      5s
 ----
+
+[TIP]
+====
+You can also view the ConfigMap in the *OCP Console* tab:
+Developer perspective -> Config Maps -> `{user}-zttest`
+====
 
 Click *Next* to validate your work.

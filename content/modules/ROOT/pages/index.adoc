@@ -1,39 +1,38 @@
-= OpenShift Pipelines Zero Touch Lab
+= Zero Touch OCP Lab
 :imagesdir: ../assets/images
 
 Welcome to this Zero Touch (ZT) hands-on lab for OpenShift.
 
-== Your credentials
+This lab uses automated grading -- each module has *Validate* and *Solve* buttons so you can check your work or skip ahead.
+
+== Your environment
 
 [cols="1,2",options="header"]
 |===
 | Item | Value
-
-| *OCP Console*
-| {openshift_console_url}
-
-| *Username*
-| {user}
-
-| *Password*
-| {password}
-
-| *Your namespace*
-| {user}-zttest
+| *OCP Console* | {openshift_console_url}
+| *Username* | {user}
+| *Password* | {password}
+| *Namespace 1* | {user}-zttest
+| *Namespace 2* | {user}-ztworkspace
 |===
 
 Use the *OCP Console* tab on the right to log in.
 
 == What you will do
 
-* *Module 1* — Create a ConfigMap in your namespace `{user}-zttest`
-* *Module 2* — Apply a label `lab-status=complete` to your namespace
+* *Module 1* -- Create a ConfigMap in `{user}-zttest`
+* *Module 2* -- Create a Secret in `{user}-ztworkspace` (your second namespace)
 
 == How this lab works
 
-Next / Validate:: Click *Next* at the bottom of each module to run automated checks.
-If something is wrong you will see a description of what to fix.
+Next / Validate:: Click *Next* at the bottom of each module to run automated checks. If something is missing, you will see a description of what to fix.
 
 Solve:: Click *Solve* if you are stuck. The automation completes the steps for you.
 
-Click *Next* to begin.
+[NOTE]
+====
+Both namespaces `{user}-zttest` and `{user}-ztworkspace` have been pre-created for you.
+====
+
+Click *Next* to begin Module 1.

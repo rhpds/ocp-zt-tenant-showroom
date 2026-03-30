@@ -1,29 +1,21 @@
-= Module 2: Create a Secret
+= Module 2: Create a Secret in Your Second Namespace
 :imagesdir: ../assets/images
 
-In this module you will create a `lab-status` Secret in your namespace.
+In this module you will create a Secret in your second namespace `{user}-ztworkspace`.
 
-== Your access
-
-[cols="1,2",options="header"]
-|===
-| Item | Value
-
-| *Username*
-| {user}
-
-| *Your namespace*
-| {user}-zttest
-|===
+[NOTE]
+====
+Many labs have multiple namespaces for different purposes. This module demonstrates working across two pre-assigned namespaces.
+====
 
 == Exercise: Create the Secret
 
-. Set your namespace variable:
+. Set your second namespace variable:
 +
 [source,sh,role=execute]
 ----
-export NS=$(oc whoami)-zttest
-echo "Using namespace: $NS"
+export NS2={user}-ztworkspace
+echo "Working in namespace: $NS2"
 ----
 
 . Create the Secret:
@@ -32,21 +24,21 @@ echo "Using namespace: $NS"
 ----
 oc create secret generic lab-status \
   --from-literal=status=complete \
-  -n $NS
+  -n $NS2
 ----
 
-== Verify
+=== Verify
 
 [source,sh,role=execute]
 ----
-oc get secret lab-status -n $NS
+oc get secret lab-status -n $NS2
 ----
 
 .Expected output
 [source,texinfo]
 ----
 NAME         TYPE     DATA   AGE
-lab-status   Opaque   2      5s
+lab-status   Opaque   1      5s
 ----
 
 Click *Next* to validate your work.
