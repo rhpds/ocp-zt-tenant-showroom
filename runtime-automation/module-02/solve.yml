@@ -1,18 +1,35 @@
 ---
-# Module 2 Solve — create a Secret in student namespace
-- name: Create lab-status Secret
-  kubernetes.core.k8s:
-    state: present
-    definition:
-      apiVersion: v1
-      kind: Secret
-      metadata:
-        name: lab-status
-        namespace: "{{ student_ns }}"
-      stringData:
-        status: complete
-        module: "2"
+- name: Module 2 Solve — create lab-status Secret
+  hosts: localhost
+  connection: local
+  gather_facts: false
 
-- name: Solve complete
-  ansible.builtin.debug:
-    msg: "Module 2 solved for {{ student_ns }}"
+  tasks:
+    - name: Read showroom-userdata ConfigMap
+      ansible.builtin.uri:
+        url: >-
+          https://kubernetes.default.svc/api/v1/namespaces/{{
+            lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/namespace')
+          }}/configmaps/showroom-userdata
+        headers:
+          Authorization: "Bearer {{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+        validate_certs: false
+        status_code: 200
+      register: r_userdata
+
+    - name: Parse user data
+      ansible.builtin.set_fact:
+        student_ns: "{{ (r_userdata.json.data['user_data.yml'] | from_yaml).user }}-zttest"
+
+    - name: Create lab-status Secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: lab-status
+            namespace: "{{ student_ns }}"
+          stringData:
+            status: complete
+            module: "2"

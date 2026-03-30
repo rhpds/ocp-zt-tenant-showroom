@@ -1,28 +1,41 @@
 ---
-# Module 1 Validation — check ConfigMap exists
-- name: Check ConfigMap exists
-  kubernetes.core.k8s_info:
-    api_version: v1
-    kind: ConfigMap
-    name: zt-test-config
-    namespace: "{{ student_ns }}"
-  register: r_cm
+- name: Module 1 Validation — check ConfigMap
+  hosts: localhost
+  connection: local
+  gather_facts: false
 
-- name: Fail — ConfigMap not found
-  when: r_cm.resources | length == 0
-  block:
-    - ansible.builtin.copy:
-        dest: "{{ job_info_dir }}/validation_failure.out"
-        content: |
+  tasks:
+    - name: Read showroom-userdata ConfigMap
+      ansible.builtin.uri:
+        url: >-
+          https://kubernetes.default.svc/api/v1/namespaces/{{
+            lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/namespace')
+          }}/configmaps/showroom-userdata
+        headers:
+          Authorization: "Bearer {{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+        validate_certs: false
+        status_code: 200
+      register: r_userdata
+
+    - name: Parse user data
+      ansible.builtin.set_fact:
+        student_ns: "{{ (r_userdata.json.data['user_data.yml'] | from_yaml).user }}-zttest"
+
+    - name: Check ConfigMap exists
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: ConfigMap
+        name: zt-test-config
+        namespace: "{{ student_ns }}"
+      register: r_cm
+
+    - name: Fail if ConfigMap missing
+      when: r_cm.resources | length == 0
+      lab_check_fail:
+        msg: |
           ConfigMap zt-test-config not found in {{ student_ns }}.
 
           Create it:
             oc create configmap zt-test-config \
               --from-literal=env=test \
               -n {{ student_ns }}
-    - ansible.builtin.fail:
-        msg: "ConfigMap missing"
-
-- name: Validation passed
-  ansible.builtin.debug:
-    msg: "Module 1 validation passed for {{ student_ns }}"

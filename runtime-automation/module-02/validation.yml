@@ -1,28 +1,41 @@
 ---
-# Module 2 Validation — check lab-status Secret exists
-- name: Check lab-status Secret exists
-  kubernetes.core.k8s_info:
-    api_version: v1
-    kind: Secret
-    name: lab-status
-    namespace: "{{ student_ns }}"
-  register: r_secret
+- name: Module 2 Validation — check lab-status Secret
+  hosts: localhost
+  connection: local
+  gather_facts: false
 
-- name: Fail — lab-status Secret not found
-  when: r_secret.resources | length == 0
-  block:
-    - ansible.builtin.copy:
-        dest: "{{ job_info_dir }}/validation_failure.out"
-        content: |
+  tasks:
+    - name: Read showroom-userdata ConfigMap
+      ansible.builtin.uri:
+        url: >-
+          https://kubernetes.default.svc/api/v1/namespaces/{{
+            lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/namespace')
+          }}/configmaps/showroom-userdata
+        headers:
+          Authorization: "Bearer {{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+        validate_certs: false
+        status_code: 200
+      register: r_userdata
+
+    - name: Parse user data
+      ansible.builtin.set_fact:
+        student_ns: "{{ (r_userdata.json.data['user_data.yml'] | from_yaml).user }}-zttest"
+
+    - name: Check lab-status Secret
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Secret
+        name: lab-status
+        namespace: "{{ student_ns }}"
+      register: r_secret
+
+    - name: Fail if Secret missing
+      when: r_secret.resources | length == 0
+      lab_check_fail:
+        msg: |
           Secret lab-status not found in {{ student_ns }}.
 
           Create it:
             oc create secret generic lab-status \
               --from-literal=status=complete \
               -n {{ student_ns }}
-    - ansible.builtin.fail:
-        msg: "lab-status Secret missing"
-
-- name: Validation passed
-  ansible.builtin.debug:
-    msg: "Module 2 validation passed — lab-status Secret exists in {{ student_ns }}"

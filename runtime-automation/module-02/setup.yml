@@ -1,26 +1,34 @@
 ---
-# Module 2 Setup — verify student namespace and module-01 resources exist
-- name: Check ConfigMap exists (module-01 baseline)
-  kubernetes.core.k8s_info:
-    api_version: v1
-    kind: ConfigMap
-    name: zt-test-config
-    namespace: "{{ student_ns }}"
-  register: r_cm
+- name: Module 2 Setup — ensure module-01 baseline
+  hosts: localhost
+  connection: local
+  gather_facts: false
 
-- name: Create ConfigMap if missing
-  when: r_cm.resources | length == 0
-  kubernetes.core.k8s:
-    state: present
-    definition:
-      apiVersion: v1
-      kind: ConfigMap
-      metadata:
-        name: zt-test-config
-        namespace: "{{ student_ns }}"
-      data:
-        env: test
+  tasks:
+    - name: Read showroom-userdata ConfigMap
+      ansible.builtin.uri:
+        url: >-
+          https://kubernetes.default.svc/api/v1/namespaces/{{
+            lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/namespace')
+          }}/configmaps/showroom-userdata
+        headers:
+          Authorization: "Bearer {{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+        validate_certs: false
+        status_code: 200
+      register: r_userdata
 
-- name: Report setup complete
-  ansible.builtin.debug:
-    msg: "Module 2 setup complete for {{ student_ns }}"
+    - name: Parse user data
+      ansible.builtin.set_fact:
+        student_ns: "{{ (r_userdata.json.data['user_data.yml'] | from_yaml).user }}-zttest"
+
+    - name: Ensure ConfigMap exists
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: zt-test-config
+            namespace: "{{ student_ns }}"
+          data:
+            env: test
