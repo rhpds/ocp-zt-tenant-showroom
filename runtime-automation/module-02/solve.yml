@@ -3,11 +3,18 @@
   hosts: localhost
   connection: local
   gather_facts: false
+  module_defaults:
+    kubernetes.core.k8s_info:
+      kubeconfig: "{{ k8s_kubeconfig | default(omit) }}"
+      validate_certs: false
+      impersonate_user: "{{ student_user | default(omit) }}"
+    kubernetes.core.k8s:
+      kubeconfig: "{{ k8s_kubeconfig | default(omit) }}"
+      validate_certs: false
+      impersonate_user: "{{ student_user | default(omit) }}"
   tasks:
     - name: Create lab-status Secret
       kubernetes.core.k8s:
-        kubeconfig: "{{ k8s_kubeconfig | default(omit) }}"
-        validate_certs: false
         state: present
         definition:
           apiVersion: v1
