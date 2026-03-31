@@ -6,6 +6,7 @@
   tasks:
     - name: Create lab-status Secret
       kubernetes.core.k8s:
+        kubeconfig: "{{ k8s_kubeconfig | default(omit) }}"
         state: present
         definition:
           apiVersion: v1
