@@ -7,6 +7,7 @@
     - name: Create lab-status Secret
       kubernetes.core.k8s:
         kubeconfig: "{{ k8s_kubeconfig | default(omit) }}"
+        validate_certs: false
         state: present
         definition:
           apiVersion: v1
