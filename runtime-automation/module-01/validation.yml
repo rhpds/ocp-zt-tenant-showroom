@@ -1,16 +1,16 @@
 ---
-- name: Module 1 Validation — ConfigMap exists and has correct data
+- name: Module 1 Validation — ConfigMap exists with correct data
   hosts: localhost
   connection: local
   gather_facts: false
   tasks:
-    - name: Check Task 1 — ConfigMap zt-test-config exists
+    - name: Check Task 1 — ConfigMap exists
       kubernetes.core.k8s_info:
         kubeconfig: "{{ k8s_kubeconfig | default(omit) }}"
         validate_certs: false
         api_version: v1
         kind: ConfigMap
-        name: zt-test-config
+        name: lab-config
         namespace: "{{ student_ns }}"
       register: r_cm
 
@@ -20,17 +20,17 @@
         _task2_ok: >-
           {{ r_cm.resources | length > 0 and
              r_cm.resources[0].data is defined and
-             r_cm.resources[0].data.get('env', '') == 'test' }}
+             r_cm.resources[0].data.get('env', '') == 'dev' }}
 
     - name: Validate all tasks
       validation_check:
         check: "{{ _task1_ok and _task2_ok }}"
         pass_msg: |
-          ✅ Task 1: ConfigMap zt-test-config exists in {{ student_ns }}
-          ✅ Task 2: ConfigMap has data key env=test
+          ✅ Task 1: ConfigMap lab-config exists in {{ student_ns }}
+          ✅ Task 2: ConfigMap has env=dev data key
         error_msg: |
-          {{ '✅' if _task1_ok else '❌' }} Task 1: ConfigMap zt-test-config exists in {{ student_ns }}
-          {{ '✅' if _task2_ok else '❌' }} Task 2: ConfigMap has data key env=test
+          {{ '✅' if _task1_ok else '❌' }} Task 1: ConfigMap lab-config exists in {{ student_ns }}
+          {{ '✅' if _task2_ok else '❌' }} Task 2: ConfigMap has env=dev data key
 
           Fix:
-            oc create configmap zt-test-config --from-literal=env=test -n {{ student_ns }}
+            oc create configmap lab-config --from-literal=env=dev -n {{ student_ns }}
