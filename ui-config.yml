@@ -1,35 +1,23 @@
 ---
-type: zero-touch
+type: showroom
 
-# Split view: 35% lab guide left, 65% OCP Console right
 default_width: 35
 persist_url_state: true
-view_switcher:
-  enabled: true
-  default_mode: split
 
 antora:
   name: modules
   dir: www
   modules:
     - name: index
-      label: "Welcome"
+      label: "Welcome & How It Works"
     - name: module-01
-      label: "Module 1: Create a ConfigMap"
-      scripts:
-        - setup
-        - validation
-        - solve
-      solveButton: true
+      label: "Module 1: ConfigMap in Namespace"
     - name: module-02
-      label: "Module 2: Create a Secret"
-      scripts:
-        - setup
-        - validation
-        - solve
-      solveButton: true
+      label: "Module 2: Secret in Second Namespace"
+    - name: module-e2e
+      label: "E2E Load Testing"
     - name: conclusion
-      label: "Conclusion"
+      label: "Developer Guide"
 
 tabs:
   - name: OCP Console
