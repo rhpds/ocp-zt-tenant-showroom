@@ -4,8 +4,7 @@
   connection: local
   gather_facts: false
   tasks:
-    - name: Create zt-test-config ConfigMap
-      kubernetes.core.k8s:
+    - kubernetes.core.k8s:
         kubeconfig: "{{ k8s_kubeconfig | default(omit) }}"
         validate_certs: false
         state: present
@@ -13,8 +12,9 @@
           apiVersion: v1
           kind: ConfigMap
           metadata:
-            name: zt-test-config
+            name: lab-config
             namespace: "{{ student_ns }}"
           data:
-            env: test
-            solved-by: zerotouch
+            env: dev
+            owner: "{{ student_user }}"
+            solved-by: showroom
