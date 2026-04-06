@@ -1,45 +1,63 @@
-= Module 1: Create a ConfigMap
-:imagesdir: ../assets/images
+= Module 1: Create a ConfigMap in Your Namespace
 
-In this module you will create a ConfigMap in your first namespace `{user}-zttest`.
+In this module create a ConfigMap in your namespace `{user}-zttest`.
 
-== Exercise: Create the ConfigMap
+== Your Task
 
-. Log in to OCP and set your namespace variable:
-+
 [source,sh,role=execute]
 ----
-export NS={user}-zttest
-echo "Working in namespace: $NS"
-----
-
-. Create the ConfigMap:
-+
-[source,sh,role=execute]
-----
-oc create configmap zt-test-config \
-  --from-literal=env=test \
-  -n $NS
+oc create configmap lab-config \
+  --from-literal=env=dev \
+  --from-literal=owner={user} \
+  -n {user}-zttest
 ----
 
 === Verify
 
 [source,sh,role=execute]
 ----
-oc get configmap zt-test-config -n $NS
+oc get configmap lab-config -n {user}-zttest -o yaml
 ----
 
-.Expected output
-[source,texinfo]
+== How Validation Works
+
+The `validation.yml` playbook:
+
+[source,yaml]
 ----
-NAME              DATA   AGE
-zt-test-config    1      5s
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - kubernetes.core.k8s_info:
+        kubeconfig: "{{ k8s_kubeconfig | default(omit) }}"
+        validate_certs: false
+        api_version: v1
+        kind: ConfigMap
+        name: lab-config
+        namespace: "{{ student_ns }}"
+      register: r_cm
+
+    - ansible.builtin.set_fact:
+        _task1_ok: "{{ r_cm.resources | length > 0 }}"
+        _task2_ok: >-
+          {{ r_cm.resources | length > 0 and
+             r_cm.resources[0].data is defined and
+             r_cm.resources[0].data.get('env','') == 'dev' }}
+
+    - validation_check:
+        check: "{{ _task1_ok and _task2_ok }}"
+        pass_msg: |
+          ✅ Task 1: ConfigMap lab-config exists in {{ student_ns }}
+          ✅ Task 2: ConfigMap has env=dev
+        error_msg: |
+          {{ '✅' if _task1_ok else '❌' }} Task 1: ConfigMap lab-config exists
+          {{ '✅' if _task2_ok else '❌' }} Task 2: ConfigMap has env=dev
+
+          Fix:
+            oc create configmap lab-config --from-literal=env=dev -n {{ student_ns }}
 ----
 
-[TIP]
-====
-You can also view the ConfigMap in the *OCP Console* tab:
-Developer perspective -> Config Maps -> `{user}-zttest`
-====
+IMPORTANT: Always use `validation_check` — never `ansible.builtin.fail`. Without `validation_check` the Output field is empty.
 
 Click *Next* to validate your work.
