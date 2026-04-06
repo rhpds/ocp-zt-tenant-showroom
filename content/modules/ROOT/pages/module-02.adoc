@@ -1,44 +1,43 @@
 = Module 2: Create a Secret in Your Second Namespace
-:imagesdir: ../assets/images
 
-In this module you will create a Secret in your second namespace `{user}-ztworkspace`.
+In this module create a Secret in `{user}-ztworkspace` — your second pre-created namespace.
 
-[NOTE]
-====
-Many labs have multiple namespaces for different purposes. This module demonstrates working across two pre-assigned namespaces.
-====
+== Your Task
 
-== Exercise: Create the Secret
-
-. Set your second namespace variable:
-+
-[source,sh,role=execute]
-----
-export NS2={user}-ztworkspace
-echo "Working in namespace: $NS2"
-----
-
-. Create the Secret:
-+
 [source,sh,role=execute]
 ----
 oc create secret generic lab-status \
   --from-literal=status=complete \
-  -n $NS2
+  --from-literal=module=2 \
+  -n {user}-ztworkspace
 ----
 
 === Verify
 
 [source,sh,role=execute]
 ----
-oc get secret lab-status -n $NS2
+oc get secret lab-status -n {user}-ztworkspace
 ----
 
-.Expected output
-[source,texinfo]
+== Adding Dynamic Dependencies
+
+If your playbooks need extra collections or Python packages, add to `runtime-automation/`:
+
+[source]
 ----
-NAME         TYPE     DATA   AGE
-lab-status   Opaque   1      5s
+runtime-automation/
+├── requirements.txt    # pip install at container start
+├── requirements.yml    # ansible-galaxy collection install at start
+├── module-01/
+└── module-02/
+----
+
+Example `requirements.yml`:
+[source,yaml]
+----
+collections:
+  - name: community.general
+    version: ">=8.0"
 ----
 
 Click *Next* to validate your work.
