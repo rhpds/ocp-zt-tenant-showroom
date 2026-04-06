@@ -1,5 +1,5 @@
 ---
-- name: Module 2 Validation — check Secret in ztworkspace
+- name: Module 2 Validation — Secret exists in second namespace
   hosts: localhost
   connection: local
   gather_facts: false
@@ -14,14 +14,14 @@
         namespace: "{{ student_ns2 }}"
       register: r_secret
 
-    - name: Validate Secret
+    - name: Validate
       validation_check:
         check: "{{ r_secret.resources | length > 0 }}"
-        pass_msg: "Secret lab-status exists in {{ student_ns2 }}"
+        pass_msg: "✅ Secret lab-status exists in {{ student_ns2 }}"
         error_msg: |
-          Secret lab-status not found in {{ student_ns2 }}.
+          ❌ Secret lab-status not found in {{ student_ns2 }}.
 
-          Create it:
+          Fix:
             oc create secret generic lab-status \
               --from-literal=status=complete \
               -n {{ student_ns2 }}
