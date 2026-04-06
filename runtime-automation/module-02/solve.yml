@@ -1,11 +1,10 @@
 ---
-- name: Module 2 Solve — create Secret in ztworkspace
+- name: Module 2 Solve — create Secret in second namespace
   hosts: localhost
   connection: local
   gather_facts: false
   tasks:
-    - name: Create lab-status Secret
-      kubernetes.core.k8s:
+    - kubernetes.core.k8s:
         kubeconfig: "{{ k8s_kubeconfig | default(omit) }}"
         validate_certs: false
         state: present
