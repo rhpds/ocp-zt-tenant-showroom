@@ -1,0 +1,58 @@
+= E2E Load Testing
+
+Run solve + validate across all modules in one shot to verify the full lab flow.
+
+== Quick E2E Test (from laptop)
+
+[source,bash]
+----
+SHOWROOM=https://<showroom-url>
+
+# Run all solvers
+for module in module-01 module-02; do
+  JOB=$(curl -sk -X POST $SHOWROOM/runner/api/${module}/solve \
+    | python3 -c "import json,sys; print(json.load(sys.stdin)['Job_id'])")
+  echo "Solve $module: $JOB"
+  sleep 30
+  curl -sk $SHOWROOM/runner/api/job/$JOB | python3 -m json.tool
+done
+
+# Run all validators
+for module in module-01 module-02; do
+  JOB=$(curl -sk -X POST $SHOWROOM/runner/api/${module}/validation \
+    | python3 -c "import json,sys; print(json.load(sys.stdin)['Job_id'])")
+  echo "Validate $module: $JOB"
+  sleep 30
+  curl -sk $SHOWROOM/runner/api/job/$JOB
+done
+----
+
+== Streaming Output (Flask SSE)
+
+[source,bash]
+----
+# Stream solve output in real-time (classic showroom approach)
+curl -sk $SHOWROOM/stream/solve/module-01
+
+# Stream validation output
+curl -sk $SHOWROOM/stream/validate/module-01
+----
+
+== AgV Load Test Parameter
+
+Add to your catalog to enable automated e2e testing at provision time:
+
+[source,yaml]
+----
+# In common.yaml
+workloads:
+  - ...existing workloads...
+  - rhpds.ftl.ocp4_runtime_automation_load_test  # runs all solve+validate
+
+# In __meta__.catalog.parameters:
+- name: zt_load_testing_enabled
+  formLabel: "Run E2E Load Test after provision"
+  openAPIV3Schema:
+    type: boolean
+    default: false
+----
