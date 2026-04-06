@@ -1,17 +1,17 @@
 ---
 site:
-  title: Showroom Template Demo
-  url: https://github.com/rhpds/showroom_template_nookbag
+  title: OCP Multi-user Solve/Validate — Reference Lab
+  url: https://rhpds.github.io/ocp-zt-tenant-showroom
   start_page: modules::index.adoc
 
 content:
   sources:
     - url: .
-      start_path: content
+      start_page: content
 
 ui:
   bundle:
-    url: https://github.com/rhpds/nookbag-bundle/releases/download/v0.0.3/ui-bundle.zip
+    url: https://github.com/rhpds/rhdp_showroom_theme/releases/download/rh-one-2025/ui-bundle.zip
     snapshot: true
   supplemental_files:
     - path: ./content/supplemental-ui
@@ -26,7 +26,7 @@ runtime:
 antora:
   extensions:
     - require: ./content/lib/dev-mode.js
-      enabled: true
+      enabled: false
 
 output:
   dir: ./www
