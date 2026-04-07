@@ -58,6 +58,14 @@ The `validation.yml` playbook:
             oc create configmap lab-config --from-literal=env=dev -n {{ student_ns }}
 ----
 
-IMPORTANT: Always use `validation_check` — never `ansible.builtin.fail`. Without `validation_check` the Output field is empty.
+include::common/solve-button.adoc[]
 
-Click *Next* to validate your work.
+++++
+<div class="solve-button-placeholder" data-module="module-01"></div>
+++++
+
+include::common/validate-button.adoc[]
+
+++++
+<div class="validate-button-placeholder" data-module="module-01"></div>
+++++
