@@ -107,11 +107,67 @@ These variables are automatically injected into every playbook by the runner:
             key: value
 ----
 
+=== Optional: oc login as Student Keycloak User
+
+If your validation needs to check something as the *student's Keycloak identity* (not the SA token), you can use `oc login` directly from the runner container. The runner has the `oc` CLI installed and can reach the OCP API.
+
+This does NOT change the default behavior — the kubeconfig SA is still used for all other tasks.
+
+[source,yaml]
+----
+---
+- name: Validate — check as student Keycloak user
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    # Default: use SA kubeconfig for most checks
+    - name: Check ConfigMap exists (as SA)
+      kubernetes.core.k8s_info:
+        kubeconfig: "{{ k8s_kubeconfig | default(omit) }}"
+        validate_certs: false
+        api_version: v1
+        kind: ConfigMap
+        name: my-config
+        namespace: "{{ student_ns }}"
+      register: r_cm
+
+    # Optional: login as Keycloak user for identity-specific checks
+    - name: Login as student Keycloak user
+      when:
+        - password is defined
+        - openshift_api_url is defined
+      ansible.builtin.command:
+        cmd: >
+          oc login {{ openshift_api_url }}
+          -u {{ student_user }}
+          -p {{ password }}
+          --insecure-skip-tls-verify=true
+      changed_when: false
+      no_log: true
+
+    - name: Check RoleBinding as student identity
+      when: password is defined
+      ansible.builtin.command:
+        cmd: oc get rolebinding -n {{ student_ns }}
+      register: r_rb
+      changed_when: false
+
+    - name: Validate
+      validation_check:
+        check: "{{ r_cm.resources | length > 0 }}"
+        pass_msg: "✅ ConfigMap exists"
+        error_msg: "❌ ConfigMap not found"
+----
+
+NOTE: `password` is available when the showroom role adds it to `user_data.yml`. Check your AgV catalog's `user_data` section to confirm it is included.
+
 === Rules
 
 * Always use `validation_check` — never `ansible.builtin.fail`
 * Always pass `kubeconfig: "{{ k8s_kubeconfig | default(omit) }}"` to `kubernetes.core` tasks
 * Use `student_ns` not hardcoded namespace names
 * The `job_info_dir` variable is injected automatically — do not define it in your playbook
+* Use `when: password is defined` to guard optional `oc login` so default behavior is preserved
 
 Click *Next* to start Module 1.
