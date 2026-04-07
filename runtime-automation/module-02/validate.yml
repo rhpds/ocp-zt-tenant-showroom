@@ -1,0 +1,27 @@
+---
+- name: Module 2 Validation — Secret exists in second namespace
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Check Secret exists
+      kubernetes.core.k8s_info:
+        kubeconfig: "{{ k8s_kubeconfig | default(omit) }}"
+        validate_certs: false
+        api_version: v1
+        kind: Secret
+        name: lab-status
+        namespace: "{{ student_ns2 }}"
+      register: r_secret
+
+    - name: Validate
+      validation_check:
+        check: "{{ r_secret.resources | length > 0 }}"
+        pass_msg: "✅ Secret lab-status exists in {{ student_ns2 }}"
+        error_msg: |
+          ❌ Secret lab-status not found in {{ student_ns2 }}.
+
+          Fix:
+            oc create secret generic lab-status \
+              --from-literal=status=complete \
+              -n {{ student_ns2 }}
