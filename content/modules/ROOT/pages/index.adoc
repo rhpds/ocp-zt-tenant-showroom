@@ -1,6 +1,6 @@
-= OCP Multi-user Lab — Solve/Validate Reference
+= OCP Multi-user Lab — E2E Test Reference
 
-This lab is the reference implementation for the classic showroom solve/validate pattern on shared OCP clusters.
+Welcome to the OCP multi-user E2E test lab. Each module has *Solve* and *Validate* buttons to auto-complete tasks and check your work automatically.
 
 == Your Environment
 
@@ -8,41 +8,110 @@ This lab is the reference implementation for the classic showroom solve/validate
 |===
 | Item | Value
 | *OCP Console* | {openshift_console_url}
-| *Username* | {user}
-| *Password* | {password}
-| *Namespace 1* | {user}-zttest
-| *Namespace 2* | {user}-ztworkspace
+| *Username* | `{user}`
+| *Password* | `{password}`
+| *Namespace 1* | `{user}-zttest`
+| *Namespace 2* | `{user}-ztworkspace`
 |===
 
-== How Solve/Validate Works
+== How This Lab Works
 
-The `zt-runner` sidecar container reads the `showroom-userdata` ConfigMap and injects extravars into every Ansible playbook:
+Each module has two buttons at the bottom of the page:
+
+🚀 *Solve Module*::
+Automatically completes all tasks in the module for you.
+Use this if you are stuck or want to skip ahead.
+Output streams live in a terminal panel so you can see what's happening.
+
+✓ *Validate Module*::
+Runs automated checks against your namespace to verify you completed the tasks correctly.
+Shows ✅ for each passing check and ❌ with a fix hint for failing ones.
+
+=== Step-by-step
+
+. Follow the instructions in the module
+. Run the commands in the *Terminal* tab on the right
+. Click *✓ Validate Module* to check your work
+. If it fails, fix the issue and validate again
+. If stuck, click *🚀 Solve Module* — then validate to confirm it passed
+
+== Writing Playbooks (Lab Author Guide)
+
+=== Available Extravars
+
+These variables are automatically injected into every playbook by the runner:
 
 [cols="1,2,1",options="header"]
 |===
-| Extravar | Source | Example value
-| `student_user` | `user` field in CM | `devuser-abc123`
-| `student_ns` | derived `{user}-zttest` | `devuser-abc123-zttest`
-| `student_ns2` | derived `{user}-ztworkspace` | `devuser-abc123-ztworkspace`
-| `k8s_kubeconfig` | zt-runner-kubeconfig Secret | `/tmp/zt-runner-xxx.kubeconfig`
-| `guid` | `guid` field in CM | `abc123`
+| Variable | Description | Example
+| `student_ns` | Student's primary namespace | `devuser-abc-zttest`
+| `student_ns2` | Student's second namespace | `devuser-abc-ztworkspace`
+| `student_user` | Student username | `devuser-abc`
+| `guid` | Lab GUID | `abc123`
+| `k8s_kubeconfig` | Path to kubeconfig file with namespace-admin access | `/tmp/zt-runner-xxx.kubeconfig`
 |===
 
-== API Endpoints (Flask SSE)
+=== validate.yml Template
 
-[source,bash]
+[source,yaml]
 ----
-# Check which modules/stages are available
-curl -sk $SHOWROOM/runner/api/config
+---
+- name: Module 1 Validation
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Check ConfigMap exists
+      kubernetes.core.k8s_info:
+        kubeconfig: "{{ k8s_kubeconfig | default(omit) }}"
+        validate_certs: false
+        api_version: v1
+        kind: ConfigMap
+        name: my-config
+        namespace: "{{ student_ns }}"
+      register: r_cm
 
-# Trigger solve (returns Job_id for polling)
-curl -sk -X POST $SHOWROOM/runner/api/module-01/solve
+    - name: Validate
+      validation_check:
+        check: "{{ r_cm.resources | length > 0 }}"
+        pass_msg: "✅ ConfigMap exists in {{ student_ns }}"
+        error_msg: |
+          ❌ ConfigMap not found in {{ student_ns }}
 
-# Stream solve output via SSE
-curl -sk $SHOWROOM/stream/solve/module-01
-
-# Poll job result
-curl -sk $SHOWROOM/runner/api/job/{Job_id}
+          Fix:
+            oc create configmap my-config -n {{ student_ns }}
 ----
+
+=== solve.yml Template
+
+[source,yaml]
+----
+---
+- name: Module 1 Solve
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Create ConfigMap
+      kubernetes.core.k8s:
+        kubeconfig: "{{ k8s_kubeconfig | default(omit) }}"
+        validate_certs: false
+        state: present
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: my-config
+            namespace: "{{ student_ns }}"
+          data:
+            key: value
+----
+
+=== Rules
+
+* Always use `validation_check` — never `ansible.builtin.fail`
+* Always pass `kubeconfig: "{{ k8s_kubeconfig | default(omit) }}"` to `kubernetes.core` tasks
+* Use `student_ns` not hardcoded namespace names
+* The `job_info_dir` variable is injected automatically — do not define it in your playbook
 
 Click *Next* to start Module 1.
