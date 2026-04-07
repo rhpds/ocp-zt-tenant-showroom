@@ -7,7 +7,7 @@ site:
 content:
   sources:
     - url: .
-      start_page: content
+      start_path: content
 
 ui:
   bundle:
