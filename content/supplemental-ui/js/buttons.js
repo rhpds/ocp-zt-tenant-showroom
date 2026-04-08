@@ -84,31 +84,30 @@
     var old = section.querySelector('.stream-panel');
     if (old) old.remove();
 
-    // Create two-column live panel
+    // Create live panel — no IDs, use querySelector on the panel itself
     var panel = document.createElement('div');
     panel.className = 'stream-panel';
     panel.innerHTML =
-      '<div class="stream-status" id="sp-status-' + moduleName + '">' +
+      '<div class="stream-status">' +
         '<span class="sp-spinner">⏳ Running</span>' +
       '</div>' +
-      '<div class="stream-body">' +
-        '<div class="stream-steps" id="sp-steps-' + moduleName + '">' +
-          '<div class="sp-steps-label">Steps</div>' +
-          '<ul class="sp-step-list" id="sp-list-' + moduleName + '"></ul>' +
-        '</div>' +
-        '<div class="stream-logs">' +
-          '<div class="sp-logs-label">Full logs</div>' +
-          '<pre class="sp-log-content" id="sp-log-' + moduleName + '"></pre>' +
-        '</div>' +
-      '</div>';
+      '<div class="stream-steps">' +
+        '<div class="sp-steps-label">Steps</div>' +
+        '<ul class="sp-step-list"></ul>' +
+      '</div>' +
+      '<details class="stream-logs-wrap">' +
+        '<summary class="sp-logs-toggle">Show logs</summary>' +
+        '<pre class="sp-log-content"></pre>' +
+      '</details>';
     section.appendChild(panel);
 
     btn.disabled = true;
     btn.textContent = '⏳ Running...';
 
-    var stepList  = document.getElementById('sp-list-' + moduleName);
-    var logEl     = document.getElementById('sp-log-' + moduleName);
-    var statusEl  = document.getElementById('sp-status-' + moduleName);
+    // Reference elements directly from panel — no getElementById, no duplicate ID issues
+    var statusEl  = panel.querySelector('.stream-status');
+    var stepList  = panel.querySelector('.sp-step-list');
+    var logEl     = panel.querySelector('.sp-log-content');
 
     // State for solve step tracking
     var currentTask = null;
