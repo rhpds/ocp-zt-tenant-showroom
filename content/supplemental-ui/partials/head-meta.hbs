@@ -1,5 +1,397 @@
-<link rel="stylesheet" href="{{uiRootPath}}/css/site-extra.css">
-<script defer src="{{uiRootPath}}/js/buttons.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="icon" href="data:image/x-icon;base64,AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAA/4QAAAAA" type="image/x-icon">
+<style>
+/* left align items inside imageblock */
+.doc .imageblock {
+    align-items: flex-start;
+  }
 
-<link rel="icon" href="{{uiRootPath}}/img/favicon.ico" type="image/x-icon">
+/* add a shadow to the image container */
+.doc .bordershadow .content{
+    border: solid 1px black;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+/*custom video css*/
+video {
+    border: solid 1px black;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+/* allow for wider screens */
+.doc {
+    max-width: none;
+}
+
+.navbar-item-right-dropdown {
+    float: right!important;
+}
+
+.navbar-dropdown-right {
+    right: 0;
+    left: auto;
+}
+
+.navbar-item-right-content {
+    width: 100%;
+    background-color: #131313;
+}
+
+/* ── Result popup ───────────────────────────────────── */
+.popup-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999; animation: fadeIn 0.15s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.popup-card {
+  background: #fff; border-radius: 12px; padding: 2rem;
+  width: min(520px, 92vw); max-height: 80vh; overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  position: relative; animation: slideUp 0.2s ease;
+}
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.popup-card.popup-pass { border-top: 5px solid #28a745; }
+.popup-card.popup-fail { border-top: 5px solid #dc3545; }
+.popup-card.popup-warn { border-top: 5px solid #ffc107; }
+
+.popup-close {
+  position: absolute; top: 1rem; right: 1rem;
+  background: none; border: none; font-size: 1.2rem;
+  cursor: pointer; color: #888; line-height: 1;
+}
+.popup-close:hover { color: #333; }
+
+.popup-status {
+  display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;
+}
+.popup-icon { font-size: 2rem; line-height: 1; }
+.popup-status-text { font-size: 1.25rem; font-weight: 700; color: #222; }
+
+.popup-module { font-size: 0.85rem; color: #888; margin-bottom: 1.25rem; }
+
+.popup-tasks { list-style: none; padding: 0; margin: 0 0 1.25rem; }
+.popup-task {
+  padding: 0.5rem 0.75rem; border-radius: 6px; font-size: 0.9rem;
+  margin-bottom: 0.4rem; font-family: 'Courier New', monospace;
+}
+.task-pass    { background: #d4edda; color: #155724; }
+.task-changed { background: #d1ecf1; color: #0c5460; }
+.task-fail    { background: #f8d7da; color: #721c24; }
+.task-note    { font-size: 0.78em; opacity: 0.7; margin-left: 0.4rem; font-style: italic; }
+
+.popup-logs summary {
+  cursor: pointer; font-size: 0.82rem; color: #666;
+  padding: 0.4rem 0; user-select: none;
+}
+.popup-logs summary:hover { color: #333; }
+.popup-log-content {
+  background: #1a1a1a; color: #ccc; border-radius: 6px;
+  padding: 1rem; font-size: 0.78rem; line-height: 1.5;
+  max-height: 260px; overflow-y: auto; white-space: pre-wrap;
+  word-wrap: break-word; margin-top: 0.5rem;
+}
+
+/* ── Send-to button ─────────────────────────────────── */
+.listingblock { position: relative; }
+.send-to-command-btn {
+  position: absolute; top: 0.5rem; right: 0.5rem;
+  background: #28a745; color: white; border: none; border-radius: 4px;
+  padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 600;
+  cursor: pointer; transition: all 0.2s; z-index: 100;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2); opacity: 0.3;
+}
+.send-to-command-btn:hover { background: #218838; transform: translateY(-2px); opacity: 1; }
+.send-to-command-btn.success { background: #27ae60; }
+.send-to-command-btn.copied { background: #3498db; }
+.listingblock pre.send-to { padding-top: 3rem !important; }
+
+/* ── Solve / Validate shared ────────────────────────── */
+.btn-section { margin: 2rem 0; padding: 1.5rem; background: #f8f9fa; border: 2px solid #dee2e6; border-radius: 8px; }
+.btn-controls { margin-bottom: 1rem; }
+.btn-output { margin-top: 1rem; background-color: #000 !important; border-radius: 6px; padding: 1.5rem; max-height: 600px; overflow-y: auto; }
+.btn-output-content { margin: 0 !important; padding: 0 !important; background: transparent !important; font-family: 'Courier New', monospace; font-size: 14px; line-height: 1.8; white-space: pre-wrap; word-wrap: break-word; font-weight: 500; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+/* ── Solve button ───────────────────────────────────── */
+.solve-btn { padding: 0.75rem 1.5rem; font-size: 1rem; font-weight: 600; border: none; border-radius: 6px; cursor: pointer; transition: all 0.3s ease; background: #28a745; color: white; }
+.solve-btn:hover:not(:disabled) { background: #218838; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(40,167,69,0.3); }
+.solve-btn:disabled { background: #adb5bd; cursor: not-allowed; animation: pulse 1.5s ease-in-out infinite; }
+.btn-output:has(.solve-btn) { border: 2px solid #00ff00; box-shadow: 0 0 10px rgba(0,255,0,0.2); }
+#solve-output-content { color: #00ff00 !important; }
+[id^="solve-output-content"] { color: #00ff00 !important; }
+
+/* ── Validate button ────────────────────────────────── */
+.validate-btn { padding: 0.75rem 1.5rem; font-size: 1rem; font-weight: 600; border: none; border-radius: 6px; cursor: pointer; transition: all 0.3s ease; background: #007bff; color: white; }
+.validate-btn:hover:not(:disabled) { background: #0056b3; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,123,255,0.3); }
+.validate-btn:disabled { background: #adb5bd; cursor: not-allowed; animation: pulse 1.5s ease-in-out infinite; }
+[id^="validate-output-content"] { color: #00bfff !important; }</style>
+
+<script>
+(function () {
+  'use strict';
+
+  // ── Send-to Terminal ──────────────────────────────────────────────────────
+
+  function initSendTo() {
+    document.querySelectorAll('pre.send-to, .send-to').forEach(function (block) {
+      if (block.dataset.sendToButtonAdded) return;
+      var listingBlock = block.closest('.listingblock');
+      if (!listingBlock) return;
+
+      var btn = document.createElement('button');
+      btn.className = 'send-to-command-btn';
+      btn.innerHTML = '▶';
+      btn.onclick = function () {
+        var cmd = (block.querySelector('code') || block).textContent.trim();
+        sendToTerminal(cmd, btn);
+      };
+      listingBlock.appendChild(btn);
+      block.dataset.sendToButtonAdded = 'true';
+    });
+  }
+
+  function sendToTerminal(command, button) {
+    var wettyFrame = null;
+    try {
+      if (window.parent && window.parent !== window) {
+        var frames = window.parent.document.querySelectorAll('iframe');
+        for (var i = 0; i < frames.length; i++) {
+          var src = frames[i].src || '';
+          if (src.indexOf('/wetty') !== -1 || src.indexOf('/tty') !== -1) {
+            wettyFrame = frames[i];
+            break;
+          }
+        }
+      }
+    } catch (e) { console.log('[Send-To] Cannot access parent:', e.message); }
+
+    var original = button.innerHTML;
+    if (wettyFrame) {
+      wettyFrame.contentWindow.postMessage({ type: 'execute', data: command + '\r' }, '*');
+      button.classList.add('success');
+      button.innerHTML = '✓ Sent!';
+      setTimeout(function () { button.classList.remove('success'); button.innerHTML = original; }, 2000);
+    } else {
+      navigator.clipboard.writeText(command).then(function () {
+        button.classList.add('copied');
+        button.innerHTML = '📋 Copied!';
+        setTimeout(function () { button.classList.remove('copied'); button.innerHTML = original; }, 2000);
+      }).catch(function () { button.innerHTML = '✗ Failed'; });
+    }
+  }
+
+  // ── Solve / Validate buttons ──────────────────────────────────────────────
+
+  function initSolve() {
+    document.querySelectorAll('.solve-button-placeholder').forEach(function (p) {
+      var m = p.getAttribute('data-module');
+      var wrap = document.createElement('div');
+      wrap.className = 'btn-section';
+      wrap.innerHTML = '<button class="solve-btn" data-module="' + m + '">🚀 Solve Module</button>';
+      p.replaceWith(wrap);
+    });
+    document.querySelectorAll('.solve-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () { runStream('solve', this.getAttribute('data-module')); });
+    });
+  }
+
+  function initValidate() {
+    document.querySelectorAll('.validate-button-placeholder').forEach(function (p) {
+      var m = p.getAttribute('data-module');
+      var wrap = document.createElement('div');
+      wrap.className = 'btn-section';
+      wrap.innerHTML = '<button class="validate-btn" data-module="' + m + '">✓ Validate Module</button>';
+      p.replaceWith(wrap);
+    });
+    document.querySelectorAll('.validate-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () { runStream('validate', this.getAttribute('data-module')); });
+    });
+  }
+
+  // ── SSE stream runner — collects output, shows popup on completion ─────────
+
+  function runStream(stage, moduleName) {
+    var btn = document.querySelector('.' + stage + '-btn[data-module="' + moduleName + '"]');
+    var label = stage === 'solve' ? '🚀 Solve Module' : '✓ Validate Module';
+
+    btn.disabled = true;
+    btn.textContent = '⏳ Running...';
+
+    var rawLines = [];
+    var es = new EventSource('/stream/' + stage + '/' + moduleName);
+
+    es.onmessage = function (event) {
+      if (event.data === '__DONE__') {
+        es.close();
+        btn.disabled = false;
+        btn.textContent = label;
+        showResultPopup(stage, moduleName, rawLines);
+        return;
+      }
+      try { rawLines.push(JSON.parse(event.data)); }
+      catch (x) { rawLines.push(event.data); }
+    };
+
+    es.onerror = function () {
+      es.close();
+      btn.disabled = false;
+      btn.textContent = label;
+      rawLines.push('\n❌ Connection closed\n');
+      showResultPopup(stage, moduleName, rawLines);
+    };
+  }
+
+  // ── Result popup ──────────────────────────────────────────────────────────
+
+  // Parse validate output — extracts ✅/❌ lines from validation_check
+  function parseValidateResults(lines) {
+    var tasks = [];
+    var passed = null;
+
+    lines.forEach(function (line) {
+      var t = line.trim();
+      if (/^✅/.test(t)) tasks.push({ ok: true,  text: t });
+      if (/^❌/.test(t)) tasks.push({ ok: false, text: t });
+      if (/Completed successfully|SUCCESS 0/i.test(line)) passed = true;
+      if (/\bFailed\b|\bFAILED\b/.test(line) && !/fix:/i.test(line)) {
+        if (passed !== true) passed = false;
+      }
+    });
+
+    if (passed === null && tasks.length > 0) {
+      passed = tasks.every(function (t) { return t.ok; });
+    }
+
+    return { tasks: tasks, passed: passed };
+  }
+
+  // Parse solve output — extracts TASK names + ok/changed/failed status
+  function parseSolveResults(lines) {
+    var steps = [];
+    var passed = true;
+    var currentTask = null;
+
+    lines.forEach(function (line) {
+      var taskMatch = line.match(/^TASK \[([^\]]+)\]/);
+      if (taskMatch) {
+        currentTask = taskMatch[1].trim();
+        // Skip internal Ansible housekeeping tasks
+        if (/^Gathering Facts$/i.test(currentTask)) currentTask = null;
+        return;
+      }
+
+      if (!currentTask) return;
+
+      if (/^ok:\s*\[/.test(line)) {
+        steps.push({ ok: true, changed: false, text: currentTask });
+        currentTask = null;
+      } else if (/^changed:\s*\[/.test(line)) {
+        steps.push({ ok: true, changed: true, text: currentTask });
+        currentTask = null;
+      } else if (/^fatal:|^failed:\s*\[/i.test(line)) {
+        steps.push({ ok: false, changed: false, text: currentTask });
+        passed = false;
+        currentTask = null;
+      } else if (/^skipping:/i.test(line)) {
+        currentTask = null;
+      }
+    });
+
+    return { steps: steps, passed: passed };
+  }
+
+  function showResultPopup(stage, moduleName, rawLines) {
+    var existing = document.getElementById('rhdp-result-popup');
+    if (existing) existing.remove();
+
+    var isSolve = stage === 'solve';
+    var statusIcon, statusText, statusClass, tasksHtml;
+
+    if (isSolve) {
+      var sr = parseSolveResults(rawLines);
+      statusIcon  = sr.passed ? '✅' : '❌';
+      statusText  = sr.passed ? 'Solve completed' : 'Solve failed';
+      statusClass = sr.passed ? 'popup-pass' : 'popup-fail';
+
+      if (sr.steps.length > 0) {
+        tasksHtml = '<ul class="popup-tasks">' +
+          sr.steps.map(function (s) {
+            var icon = s.ok ? (s.changed ? '🔄' : '✓') : '✗';
+            var cls  = s.ok ? (s.changed ? 'task-changed' : 'task-pass') : 'task-fail';
+            var note = s.ok ? (s.changed ? ' (applied)' : ' (already set)') : ' (failed)';
+            return '<li class="popup-task ' + cls + '">' + icon + ' ' + escHtml(s.text) + '<span class="task-note">' + note + '</span></li>';
+          }).join('') +
+          '</ul>';
+      } else {
+        tasksHtml = '';
+      }
+    } else {
+      var vr = parseValidateResults(rawLines);
+      statusIcon  = vr.passed === false ? '❌' : vr.passed === true ? '✅' : '⚠️';
+      statusText  = vr.passed === false ? 'Validation failed' : vr.passed === true ? 'All checks passed' : 'Completed';
+      statusClass = vr.passed === false ? 'popup-fail' : vr.passed === true ? 'popup-pass' : 'popup-warn';
+
+      tasksHtml = vr.tasks.length > 0
+        ? '<ul class="popup-tasks">' +
+            vr.tasks.map(function (t) {
+              return '<li class="popup-task ' + (t.ok ? 'task-pass' : 'task-fail') + '">' + escHtml(t.text) + '</li>';
+            }).join('') +
+          '</ul>'
+        : '';
+    }
+
+    var rawHtml = '<details class="popup-logs"><summary>Show full logs</summary>' +
+      '<pre class="popup-log-content">' + escHtml(rawLines.join('')) + '</pre></details>';
+
+    var popup = document.createElement('div');
+    popup.id = 'rhdp-result-popup';
+    popup.className = 'popup-overlay';
+    popup.innerHTML =
+      '<div class="popup-card ' + statusClass + '">' +
+        '<button class="popup-close" aria-label="Close">✕</button>' +
+        '<div class="popup-status">' +
+          '<span class="popup-icon">' + statusIcon + '</span>' +
+          '<span class="popup-status-text">' + escHtml(statusText) + '</span>' +
+        '</div>' +
+        '<div class="popup-module">Module: ' + escHtml(moduleName) + '</div>' +
+        tasksHtml +
+        rawHtml +
+      '</div>';
+
+    document.body.appendChild(popup);
+
+    // Close handlers
+    popup.querySelector('.popup-close').addEventListener('click', function () { popup.remove(); });
+    popup.addEventListener('click', function (e) { if (e.target === popup) popup.remove(); });
+    document.addEventListener('keydown', function esc(e) {
+      if (e.key === 'Escape') { popup.remove(); document.removeEventListener('keydown', esc); }
+    });
+  }
+
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // ── Boot ──────────────────────────────────────────────────────────────────
+
+  function init() {
+    initSendTo();
+    initSolve();
+    initValidate();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+})();
+</script>
