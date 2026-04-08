@@ -58,8 +58,6 @@ The `validation.yml` playbook:
             oc create configmap lab-config --from-literal=env=dev -n {{ student_ns }}
 ----
 
-include::common/solve-button.adoc[]
-
 ++++
 <div class="solve-button-placeholder" data-module="module-01"></div>
 ++++
