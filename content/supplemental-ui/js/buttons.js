@@ -131,13 +131,9 @@
       logEl.textContent += line;
       logEl.scrollTop = logEl.scrollHeight;
 
-      // ── Update steps live ──
-      if (stage === 'solve') {
-        parseSolveLine(line, stepList, { currentTask: currentTask, pendingLi: pendingLi },
-          function (state) { currentTask = state.currentTask; pendingLi = state.pendingLi; });
-      } else {
-        parseValidateLine(line, stepList);
-      }
+      // ── Update steps live — same TASK parsing for both solve and validate ──
+      parseSolveLine(line, stepList, { currentTask: currentTask, pendingLi: pendingLi },
+        function (state) { currentTask = state.currentTask; pendingLi = state.pendingLi; });
     };
 
     es.onerror = function () {
@@ -162,7 +158,10 @@
     var taskMatch = clean.match(/TASK \[([^\]]+)\]/);
     if (taskMatch) {
       var name = taskMatch[1].trim();
-      if (/^Gathering Facts$/i.test(name)) { setState({ currentTask: null, pendingLi: null }); return; }
+      // Skip internal housekeeping tasks not meaningful to students
+      if (/^Gathering Facts$|^Build task results|^build task|^set_fact|^ansible\.builtin\.set_fact/i.test(name)) {
+        setState({ currentTask: null, pendingLi: null }); return;
+      }
       var li = document.createElement('li');
       li.className = 'sp-step sp-step-pending';
       li.textContent = '⏳ ' + name;
