@@ -114,22 +114,21 @@
 
   // ── Result popup ──────────────────────────────────────────────────────────
 
-  function parseResults(lines) {
+  // Parse validate output — extracts ✅/❌ lines from validation_check
+  function parseValidateResults(lines) {
     var tasks = [];
-    var passed = null; // true = all pass, false = some fail, null = unknown
+    var passed = null;
 
     lines.forEach(function (line) {
-      // validation_check pass/fail lines
-      if (/^✅/.test(line.trim())) tasks.push({ ok: true,  text: line.trim() });
-      if (/^❌/.test(line.trim())) tasks.push({ ok: false, text: line.trim() });
-      // summary line
+      var t = line.trim();
+      if (/^✅/.test(t)) tasks.push({ ok: true,  text: t });
+      if (/^❌/.test(t)) tasks.push({ ok: false, text: t });
       if (/Completed successfully|SUCCESS 0/i.test(line)) passed = true;
-      if (/\bFailed\b|\bFAILED\b|\bfailed\b/.test(line) && !/fix:/i.test(line)) {
+      if (/\bFailed\b|\bFAILED\b/.test(line) && !/fix:/i.test(line)) {
         if (passed !== true) passed = false;
       }
     });
 
-    // fallback: derive from tasks list
     if (passed === null && tasks.length > 0) {
       passed = tasks.every(function (t) { return t.ok; });
     }
@@ -137,35 +136,79 @@
     return { tasks: tasks, passed: passed };
   }
 
+  // Parse solve output — extracts TASK names + ok/changed/failed status
+  function parseSolveResults(lines) {
+    var steps = [];
+    var passed = true;
+    var currentTask = null;
+
+    lines.forEach(function (line) {
+      var taskMatch = line.match(/^TASK \[([^\]]+)\]/);
+      if (taskMatch) {
+        currentTask = taskMatch[1].trim();
+        // Skip internal Ansible housekeeping tasks
+        if (/^Gathering Facts$/i.test(currentTask)) currentTask = null;
+        return;
+      }
+
+      if (!currentTask) return;
+
+      if (/^ok:\s*\[/.test(line)) {
+        steps.push({ ok: true, changed: false, text: currentTask });
+        currentTask = null;
+      } else if (/^changed:\s*\[/.test(line)) {
+        steps.push({ ok: true, changed: true, text: currentTask });
+        currentTask = null;
+      } else if (/^fatal:|^failed:\s*\[/i.test(line)) {
+        steps.push({ ok: false, changed: false, text: currentTask });
+        passed = false;
+        currentTask = null;
+      } else if (/^skipping:/i.test(line)) {
+        currentTask = null;
+      }
+    });
+
+    return { steps: steps, passed: passed };
+  }
+
   function showResultPopup(stage, moduleName, rawLines) {
-    // Remove any existing popup
     var existing = document.getElementById('rhdp-result-popup');
     if (existing) existing.remove();
 
-    var result = parseResults(rawLines);
     var isSolve = stage === 'solve';
+    var statusIcon, statusText, statusClass, tasksHtml;
 
-    // Determine overall status
-    var statusIcon, statusText, statusClass;
     if (isSolve) {
-      // Solve: passed if no error lines
-      var hasError = rawLines.some(function (l) { return /\bfailed\b|\bFATAL\b/i.test(l) && !/fix:/i.test(l); });
-      statusIcon = hasError ? '❌' : '✅';
-      statusText = hasError ? 'Solve failed' : 'Solve completed';
-      statusClass = hasError ? 'popup-fail' : 'popup-pass';
-    } else {
-      statusIcon = result.passed === false ? '❌' : result.passed === true ? '✅' : '⚠️';
-      statusText = result.passed === false ? 'Validation failed' : result.passed === true ? 'All checks passed' : 'Completed';
-      statusClass = result.passed === false ? 'popup-fail' : result.passed === true ? 'popup-pass' : 'popup-warn';
-    }
+      var sr = parseSolveResults(rawLines);
+      statusIcon  = sr.passed ? '✅' : '❌';
+      statusText  = sr.passed ? 'Solve completed' : 'Solve failed';
+      statusClass = sr.passed ? 'popup-pass' : 'popup-fail';
 
-    var tasksHtml = '';
-    if (result.tasks.length > 0) {
-      tasksHtml = '<ul class="popup-tasks">' +
-        result.tasks.map(function (t) {
-          return '<li class="popup-task ' + (t.ok ? 'task-pass' : 'task-fail') + '">' + escHtml(t.text) + '</li>';
-        }).join('') +
-        '</ul>';
+      if (sr.steps.length > 0) {
+        tasksHtml = '<ul class="popup-tasks">' +
+          sr.steps.map(function (s) {
+            var icon = s.ok ? (s.changed ? '🔄' : '✓') : '✗';
+            var cls  = s.ok ? (s.changed ? 'task-changed' : 'task-pass') : 'task-fail';
+            var note = s.ok ? (s.changed ? ' (applied)' : ' (already set)') : ' (failed)';
+            return '<li class="popup-task ' + cls + '">' + icon + ' ' + escHtml(s.text) + '<span class="task-note">' + note + '</span></li>';
+          }).join('') +
+          '</ul>';
+      } else {
+        tasksHtml = '';
+      }
+    } else {
+      var vr = parseValidateResults(rawLines);
+      statusIcon  = vr.passed === false ? '❌' : vr.passed === true ? '✅' : '⚠️';
+      statusText  = vr.passed === false ? 'Validation failed' : vr.passed === true ? 'All checks passed' : 'Completed';
+      statusClass = vr.passed === false ? 'popup-fail' : vr.passed === true ? 'popup-pass' : 'popup-warn';
+
+      tasksHtml = vr.tasks.length > 0
+        ? '<ul class="popup-tasks">' +
+            vr.tasks.map(function (t) {
+              return '<li class="popup-task ' + (t.ok ? 'task-pass' : 'task-fail') + '">' + escHtml(t.text) + '</li>';
+            }).join('') +
+          '</ul>'
+        : '';
     }
 
     var rawHtml = '<details class="popup-logs"><summary>Show full logs</summary>' +

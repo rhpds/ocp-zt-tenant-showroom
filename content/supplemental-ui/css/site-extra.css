@@ -74,8 +74,10 @@ video {
   padding: 0.5rem 0.75rem; border-radius: 6px; font-size: 0.9rem;
   margin-bottom: 0.4rem; font-family: 'Courier New', monospace;
 }
-.task-pass { background: #d4edda; color: #155724; }
-.task-fail { background: #f8d7da; color: #721c24; }
+.task-pass    { background: #d4edda; color: #155724; }
+.task-changed { background: #d1ecf1; color: #0c5460; }
+.task-fail    { background: #f8d7da; color: #721c24; }
+.task-note    { font-size: 0.78em; opacity: 0.7; margin-left: 0.4rem; font-style: italic; }
 
 .popup-logs summary {
   cursor: pointer; font-size: 0.82rem; color: #666;
