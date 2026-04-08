@@ -34,61 +34,50 @@ video {
     background-color: #131313;
 }
 
-/* ── Result popup ───────────────────────────────────── */
-.popup-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.55);
-  display: flex; align-items: center; justify-content: center;
-  z-index: 9999; animation: fadeIn 0.15s ease;
+/* ── Live stream panel ──────────────────────────────── */
+.stream-panel {
+  margin-top: 1rem; border: 1px solid #dee2e6; border-radius: 8px;
+  overflow: hidden; animation: slideDown 0.2s ease;
 }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
 
-.popup-card {
-  background: #fff; border-radius: 12px; padding: 2rem;
-  width: min(520px, 92vw); max-height: 80vh; overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-  position: relative; animation: slideUp 0.2s ease;
+.stream-status {
+  padding: 0.6rem 1rem; background: #f0f0f0;
+  border-bottom: 1px solid #dee2e6; font-weight: 600; font-size: 0.95rem;
 }
-@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.sp-spinner { color: #666; }
+.sp-status-pass { color: #155724; }
+.sp-status-fail { color: #721c24; }
 
-.popup-card.popup-pass { border-top: 5px solid #28a745; }
-.popup-card.popup-fail { border-top: 5px solid #dc3545; }
-.popup-card.popup-warn { border-top: 5px solid #ffc107; }
-
-.popup-close {
-  position: absolute; top: 1rem; right: 1rem;
-  background: none; border: none; font-size: 1.2rem;
-  cursor: pointer; color: #888; line-height: 1;
+.stream-body {
+  display: grid; grid-template-columns: 1fr 1fr; min-height: 140px;
 }
-.popup-close:hover { color: #333; }
 
-.popup-status {
-  display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;
+.stream-steps {
+  padding: 0.75rem 1rem; border-right: 1px solid #dee2e6; background: #fafafa;
 }
-.popup-icon { font-size: 2rem; line-height: 1; }
-.popup-status-text { font-size: 1.25rem; font-weight: 700; color: #222; }
-
-.popup-module { font-size: 0.85rem; color: #888; margin-bottom: 1.25rem; }
-
-.popup-tasks { list-style: none; padding: 0; margin: 0 0 1.25rem; }
-.popup-task {
-  padding: 0.5rem 0.75rem; border-radius: 6px; font-size: 0.9rem;
-  margin-bottom: 0.4rem; font-family: 'Courier New', monospace;
+.sp-steps-label, .sp-logs-label {
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.06em; color: #888; margin-bottom: 0.5rem;
 }
-.task-pass    { background: #d4edda; color: #155724; }
-.task-changed { background: #d1ecf1; color: #0c5460; }
-.task-fail    { background: #f8d7da; color: #721c24; }
-.task-note    { font-size: 0.78em; opacity: 0.7; margin-left: 0.4rem; font-style: italic; }
 
-.popup-logs summary {
-  cursor: pointer; font-size: 0.82rem; color: #666;
-  padding: 0.4rem 0; user-select: none;
+.sp-step-list { list-style: none; padding: 0; margin: 0; }
+.sp-step {
+  padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.84rem;
+  margin-bottom: 0.3rem; font-family: 'Courier New', monospace;
 }
-.popup-logs summary:hover { color: #333; }
-.popup-log-content {
-  background: #1a1a1a; color: #ccc; border-radius: 6px;
-  padding: 1rem; font-size: 0.78rem; line-height: 1.5;
-  max-height: 260px; overflow-y: auto; white-space: pre-wrap;
-  word-wrap: break-word; margin-top: 0.5rem;
+.sp-step-pending { background: #fff3cd; color: #856404; }
+.sp-step-ok      { background: #d4edda; color: #155724; }
+.sp-step-changed { background: #d1ecf1; color: #0c5460; }
+.sp-step-fail    { background: #f8d7da; color: #721c24; }
+
+.stream-logs { padding: 0.75rem 1rem; background: #111; }
+.sp-logs-label { color: #555; }
+.sp-log-content {
+  margin: 0; background: transparent; color: #aaa;
+  font-family: 'Courier New', monospace; font-size: 0.76rem;
+  line-height: 1.5; white-space: pre-wrap; word-break: break-all;
+  max-height: 220px; overflow-y: auto;
 }
 
 /* ── Send-to button ─────────────────────────────────── */
