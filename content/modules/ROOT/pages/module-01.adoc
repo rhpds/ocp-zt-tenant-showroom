@@ -4,7 +4,7 @@ In this module create a ConfigMap in your namespace `{user}-zttest`.
 
 == Your Task
 
-[source,sh,role=execute]
+[source,sh,role="execute send-to"]
 ----
 oc create configmap lab-config \
   --from-literal=env=dev \
@@ -14,7 +14,7 @@ oc create configmap lab-config \
 
 === Verify
 
-[source,sh,role=execute]
+[source,sh,role="execute send-to"]
 ----
 oc get configmap lab-config -n {user}-zttest -o yaml
 ----
@@ -58,13 +58,9 @@ The `validation.yml` playbook:
             oc create configmap lab-config --from-literal=env=dev -n {{ student_ns }}
 ----
 
-include::common/solve-button.adoc[]
-
 ++++
 <div class="solve-button-placeholder" data-module="module-01"></div>
 ++++
-
-include::common/validate-button.adoc[]
 
 ++++
 <div class="validate-button-placeholder" data-module="module-01"></div>
