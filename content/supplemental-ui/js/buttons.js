@@ -152,13 +152,18 @@
 
   // ── Live solve parser ─────────────────────────────────────────────────────
   // Tracks TASK [name] → ok/changed/failed lines and updates step chips live.
+  // Strips ANSI escape codes before matching (Ansible uses color codes).
+
+  function stripAnsi(s) {
+    return s.replace(/\u001b\[[0-9;]*[a-zA-Z]/g, '').replace(/\r/g, '');
+  }
 
   function parseSolveLine(line, stepList, state, setState) {
-    var taskMatch = line.match(/^TASK \[([^\]]+)\]/);
+    var clean = stripAnsi(line);
+    var taskMatch = clean.match(/TASK \[([^\]]+)\]/);
     if (taskMatch) {
       var name = taskMatch[1].trim();
       if (/^Gathering Facts$/i.test(name)) { setState({ currentTask: null, pendingLi: null }); return; }
-      // Add a pending step chip
       var li = document.createElement('li');
       li.className = 'sp-step sp-step-pending';
       li.textContent = '⏳ ' + name;
@@ -168,19 +173,19 @@
     }
     if (!state.pendingLi) return;
 
-    if (/^ok:\s*\[/.test(line)) {
+    if (/^ok:\s*\[/.test(clean)) {
       state.pendingLi.className = 'sp-step sp-step-ok';
       state.pendingLi.textContent = '✓ ' + state.currentTask;
       setState({ currentTask: null, pendingLi: null });
-    } else if (/^changed:\s*\[/.test(line)) {
+    } else if (/^changed:\s*\[/.test(clean)) {
       state.pendingLi.className = 'sp-step sp-step-changed';
       state.pendingLi.textContent = '🔄 ' + state.currentTask;
       setState({ currentTask: null, pendingLi: null });
-    } else if (/^fatal:|^failed:\s*\[/i.test(line)) {
+    } else if (/^fatal:|^failed:\s*\[/i.test(clean)) {
       state.pendingLi.className = 'sp-step sp-step-fail';
       state.pendingLi.textContent = '✗ ' + state.currentTask;
       setState({ currentTask: null, pendingLi: null });
-    } else if (/^skipping:/i.test(line)) {
+    } else if (/^skipping:/i.test(clean)) {
       state.pendingLi.remove();
       setState({ currentTask: null, pendingLi: null });
     }
@@ -190,7 +195,7 @@
   // Adds ✅/❌ chips as validation_check lines stream in.
 
   function parseValidateLine(line, stepList) {
-    var t = line.trim();
+    var t = stripAnsi(line).trim();
     if (/^✅/.test(t)) {
       var li = document.createElement('li');
       li.className = 'sp-step sp-step-ok';
@@ -207,10 +212,10 @@
   // ── Finalize status banner ────────────────────────────────────────────────
 
   function finalize(stage, statusEl, stepList, logEl) {
-    var steps = stepList.querySelectorAll('.sp-step');
     var hasFail = stepList.querySelector('.sp-step-fail');
     var hasPending = stepList.querySelector('.sp-step-pending');
     if (hasPending) { hasPending.className = 'sp-step sp-step-fail'; hasPending.textContent = '✗ ' + hasPending.textContent.replace('⏳ ', ''); }
+    hasFail = stepList.querySelector('.sp-step-fail');
 
     var passed = !hasFail;
     var icon   = passed ? '✅' : '❌';
