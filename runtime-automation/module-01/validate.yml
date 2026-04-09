@@ -4,7 +4,7 @@
   connection: local
   gather_facts: false
   tasks:
-    - name: Check Task 1 — ConfigMap exists
+    - name: Check lab-config ConfigMap exists
       kubernetes.core.k8s_info:
         kubeconfig: "{{ k8s_kubeconfig | default(omit) }}"
         validate_certs: false
@@ -14,6 +14,28 @@
         namespace: "{{ student_ns }}"
       register: r_cm
 
+    - name: Check lab-status ConfigMap exists
+      kubernetes.core.k8s_info:
+        kubeconfig: "{{ k8s_kubeconfig | default(omit) }}"
+        validate_certs: false
+        api_version: v1
+        kind: ConfigMap
+        name: lab-status
+        namespace: "{{ student_ns }}"
+      register: r_status
+
+    - name: Check lab-config has correct labels
+      kubernetes.core.k8s_info:
+        kubeconfig: "{{ k8s_kubeconfig | default(omit) }}"
+        validate_certs: false
+        api_version: v1
+        kind: ConfigMap
+        name: lab-config
+        namespace: "{{ student_ns }}"
+        label_selectors:
+          - app=zt-lab
+      register: r_labels
+
     - name: Build task results
       ansible.builtin.set_fact:
         _task1_ok: "{{ r_cm.resources | length > 0 }}"
@@ -21,16 +43,23 @@
           {{ r_cm.resources | length > 0 and
              r_cm.resources[0].data is defined and
              r_cm.resources[0].data.get('env', '') == 'dev' }}
+        _task3_ok: "{{ r_status.resources | length > 0 }}"
+        _task4_ok: "{{ r_labels.resources | length > 0 }}"
 
     - name: Validate all tasks
       validation_check:
-        check: "{{ _task1_ok and _task2_ok }}"
+        check: "{{ _task1_ok and _task2_ok and _task3_ok and _task4_ok }}"
         pass_msg: |
           ✅ Task 1: ConfigMap lab-config exists in {{ student_ns }}
           ✅ Task 2: ConfigMap has env=dev data key
+          ✅ Task 3: ConfigMap lab-status exists
+          ✅ Task 4: lab-config has app=zt-lab label
         error_msg: |
           {{ '✅' if _task1_ok else '❌' }} Task 1: ConfigMap lab-config exists in {{ student_ns }}
           {{ '✅' if _task2_ok else '❌' }} Task 2: ConfigMap has env=dev data key
+          {{ '✅' if _task3_ok else '❌' }} Task 3: ConfigMap lab-status exists
+          {{ '✅' if _task4_ok else '❌' }} Task 4: lab-config has app=zt-lab label
 
           Fix:
             oc create configmap lab-config --from-literal=env=dev -n {{ student_ns }}
+            Run the Solve button to create all required resources.

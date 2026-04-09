@@ -1,10 +1,11 @@
 ---
-- name: Module 1 Solve — create ConfigMap
+- name: Module 1 Solve — create ConfigMap with multiple data keys
   hosts: localhost
   connection: local
   gather_facts: false
   tasks:
-    - kubernetes.core.k8s:
+    - name: Create lab-config ConfigMap
+      kubernetes.core.k8s:
         kubeconfig: "{{ k8s_kubeconfig | default(omit) }}"
         validate_certs: false
         state: present
@@ -14,6 +15,40 @@
           metadata:
             name: lab-config
             namespace: "{{ student_ns }}"
+          data:
+            env: dev
+            owner: "{{ student_user }}"
+            solved-by: showroom
+
+    - name: Create lab-status ConfigMap
+      kubernetes.core.k8s:
+        kubeconfig: "{{ k8s_kubeconfig | default(omit) }}"
+        validate_certs: false
+        state: present
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: lab-status
+            namespace: "{{ student_ns }}"
+          data:
+            status: solved
+            module: "module-01"
+
+    - name: Label lab-config ConfigMap
+      kubernetes.core.k8s:
+        kubeconfig: "{{ k8s_kubeconfig | default(omit) }}"
+        validate_certs: false
+        state: present
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: lab-config
+            namespace: "{{ student_ns }}"
+            labels:
+              app: zt-lab
+              module: module-01
           data:
             env: dev
             owner: "{{ student_user }}"
