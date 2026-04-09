@@ -58,7 +58,10 @@
     }
 
     // Inject execute-listener into ttyd terminal if not already done
-    ensureTerminalListener(frame);
+    // Only inject for /terminal or /tty paths, not for /wetty (which has native support)
+    if (targetPath.match(/^\/(terminal|tty)/)) {
+      ensureTerminalListener(frame);
+    }
 
     frame.contentWindow.postMessage({ type: 'execute', data: command + '\r' }, '*');
     button.classList.add('success'); button.innerHTML = '✓ Sent!';
