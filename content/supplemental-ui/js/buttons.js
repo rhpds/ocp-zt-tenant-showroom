@@ -159,7 +159,7 @@
     if (taskMatch) {
       var name = taskMatch[1].trim();
       // Skip internal housekeeping tasks not meaningful to students
-      if (/^Gathering Facts$|^Build task results|^build task|^set_fact|^ansible\.builtin\.set_fact/i.test(name)) {
+      if (/^Gathering Facts$|^Build task results|^build task|^set_fact|^ansible\.builtin\.set_fact|^Validate all tasks$/i.test(name)) {
         setState({ currentTask: null, pendingLi: null }); return;
       }
       var li = document.createElement('li');
@@ -216,13 +216,12 @@
     hasFail = stepList.querySelector('.sp-step-fail');
 
     var passed = !hasFail;
-    var icon   = passed ? 'PASS' : 'FAIL';
-    var text   = stage === 'solve'
+    var text = stage === 'solve'
       ? (passed ? 'Solve completed' : 'Solve failed')
       : (passed ? 'All checks passed' : 'Validation failed');
-    var cls    = passed ? 'sp-status-pass' : 'sp-status-fail';
+    var cls  = passed ? 'sp-status-pass' : 'sp-status-fail';
 
-    statusEl.innerHTML = '<span class="' + cls + '">' + icon + ' ' + escHtml(text) + '</span>';
+    statusEl.innerHTML = '<span class="' + cls + '">' + escHtml(text) + '</span>';
   }
 
   function escHtml(str) {
