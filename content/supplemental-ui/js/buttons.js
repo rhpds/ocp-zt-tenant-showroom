@@ -89,7 +89,7 @@
     panel.className = 'stream-panel';
     panel.innerHTML =
       '<div class="stream-status">' +
-        '<span class="sp-spinner">⏳ Running</span>' +
+        '<span class="sp-spinner">Running...</span>' +
       '</div>' +
       '<div class="stream-steps">' +
         '<div class="sp-steps-label">Steps</div>' +
@@ -164,7 +164,7 @@
       }
       var li = document.createElement('li');
       li.className = 'sp-step sp-step-pending';
-      li.textContent = '⏳ ' + name;
+      li.textContent = name;
       stepList.appendChild(li);
       setState({ currentTask: name, pendingLi: li });
       return;
@@ -173,15 +173,15 @@
 
     if (/^ok:\s*\[/.test(clean)) {
       state.pendingLi.className = 'sp-step sp-step-ok';
-      state.pendingLi.textContent = '✓ ' + state.currentTask;
+      state.pendingLi.textContent = state.currentTask;
       setState({ currentTask: null, pendingLi: null });
     } else if (/^changed:\s*\[/.test(clean)) {
       state.pendingLi.className = 'sp-step sp-step-changed';
-      state.pendingLi.textContent = '🔄 ' + state.currentTask;
+      state.pendingLi.textContent = state.currentTask;
       setState({ currentTask: null, pendingLi: null });
     } else if (/^fatal:|^failed:\s*\[/i.test(clean)) {
       state.pendingLi.className = 'sp-step sp-step-fail';
-      state.pendingLi.textContent = '✗ ' + state.currentTask;
+      state.pendingLi.textContent = state.currentTask;
       setState({ currentTask: null, pendingLi: null });
     } else if (/^skipping:/i.test(clean)) {
       state.pendingLi.remove();
@@ -212,11 +212,11 @@
   function finalize(stage, statusEl, stepList, logEl) {
     var hasFail = stepList.querySelector('.sp-step-fail');
     var hasPending = stepList.querySelector('.sp-step-pending');
-    if (hasPending) { hasPending.className = 'sp-step sp-step-fail'; hasPending.textContent = '✗ ' + hasPending.textContent.replace('⏳ ', ''); }
+    if (hasPending) { hasPending.className = 'sp-step sp-step-fail'; }
     hasFail = stepList.querySelector('.sp-step-fail');
 
     var passed = !hasFail;
-    var icon   = passed ? '✅' : '❌';
+    var icon   = passed ? 'PASS' : 'FAIL';
     var text   = stage === 'solve'
       ? (passed ? 'Solve completed' : 'Solve failed')
       : (passed ? 'All checks passed' : 'Validation failed');
