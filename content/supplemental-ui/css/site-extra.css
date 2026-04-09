@@ -58,7 +58,7 @@ video {
   letter-spacing: 0.06em; color: #888; margin-bottom: 0.5rem;
 }
 
-.sp-step-list { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.sp-step-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.3rem; }
 .sp-step {
   padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.84rem;
   font-family: 'Courier New', monospace;
