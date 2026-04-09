@@ -4,7 +4,7 @@ In this module create a ConfigMap in your namespace `{user}-zttest`.
 
 == Your Task
 
-[source,sh,role="execute send-to"]
+[source,sh,role="execute send-to-wetty"]
 ----
 oc create configmap lab-config \
   --from-literal=env=dev \
@@ -14,7 +14,7 @@ oc create configmap lab-config \
 
 === Verify
 
-[source,sh,role="execute send-to"]
+[source,sh,role="execute send-to-wetty"]
 ----
 oc get configmap lab-config -n {user}-zttest -o yaml
 ----
