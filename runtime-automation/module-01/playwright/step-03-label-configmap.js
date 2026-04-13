@@ -77,13 +77,16 @@ const { chromium } = require("playwright");
       await page.waitForURL(`${consoleUrl}/**`, { timeout: 20000 });
     }
 
-    // Navigate to ConfigMap
+    // Wait for SPA internal redirects to settle after login
+    await page.waitForTimeout(2000);
+    // Navigate to ConfigMap (use domcontentloaded — console SPA has internal redirects)
     if (!page.url().includes(resourceName)) {
       await page.goto(`${consoleUrl}/k8s/ns/${namespace}/configmaps/${resourceName}`,
-        { waitUntil: "networkidle", timeout: 20000 });
+        { waitUntil: "domcontentloaded", timeout: 20000 });
+      await page.waitForTimeout(3000);
     }
 
-    // Wait for page to fully render (console SPA needs time after navigation)
+    // Wait for page to fully render
     await page.waitForTimeout(3000);
     await page.waitForLoadState('networkidle', { timeout: 15000 });
     // Actions → Edit labels → Save
