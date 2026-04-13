@@ -25,11 +25,14 @@ oc create secret generic lab-secret \
 
 Open the OCP Console and label the ConfigMap:
 
+[subs="attributes+"]
+--
 . Navigate to *{openshift_cluster_console_url}*
 . Go to *Workloads → ConfigMaps* → select *lab-config* in namespace `{student_ns}`
 . Click *Actions → Edit labels*
 . Add label: `app=lab`
 . Click *Save*
+--
 
 ++++
 <div class="solve-button-placeholder" data-module="module-01"></div>

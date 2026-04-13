@@ -4,6 +4,8 @@ This module has 2 steps in the OCP Console (UI-required) and 1 step via CLI (Ans
 
 == Step 1: Create a Deployment in the OCP Console (UI — requires browser)
 
+[subs="attributes+"]
+--
 . Go to *{openshift_cluster_console_url}*
 . Switch to *Developer* perspective
 . Go to *+Add → Container images*
@@ -12,6 +14,7 @@ This module has 2 steps in the OCP Console (UI-required) and 1 step via CLI (Ans
 . Name: `lab-deploy`
 . Namespace: `{student_ns}`
 . Click *Create*
+--
 
 == Step 2: Scale the Deployment in the OCP Console (UI — requires browser)
 
