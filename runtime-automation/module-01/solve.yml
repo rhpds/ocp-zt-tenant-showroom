@@ -38,13 +38,15 @@
           stringData:
             api-key: my-secret-value
 
-    - name: Label ConfigMap via OCP Console (Playwright/oc UI step)
+    - name: Label ConfigMap via OCP Console (Playwright — Sandbox user login)
       ansible.builtin.script:
         executable: node
         cmd: "{{ playbook_dir }}/playwright/step-03-label-configmap.js"
       environment:
-        KUBECONFIG: "{{ k8s_kubeconfig | default('') }}"
+        CONSOLE_URL: "{{ openshift_console_url | default('') }}"
         NAMESPACE: "{{ student_ns }}"
+        USERNAME: "{{ user }}"
+        PASSWORD: "{{ password }}"
         RESOURCE_NAME: lab-config
         LABEL_KEY: app
         LABEL_VALUE: lab
