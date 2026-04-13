@@ -1,17 +1,7 @@
 ---
 # SOLVE — Module 1: CLI + Console
 # Lab type: OCP Tenant
-# Extravars: k8s_kubeconfig, student_ns, student_user, guid
-#
-# Steps:
-#   1. Create ConfigMap lab-config    → kubernetes.core.k8s
-#   2. Create Secret lab-secret       → kubernetes.core.k8s
-#   3. Label ConfigMap app=lab        → kubernetes.core.k8s (API equivalent)
-#
-# NOTE: Step 3 is done via OCP Console in the lab.
-# The Playwright version (playwright/step-03-label-configmap.js) is generated
-# but requires 'playwright' npm package in the runner image.
-# Using kubernetes.core patch here as it produces identical state.
+# Extravars: k8s_kubeconfig, student_ns, student_user, guid, openshift_console_url
 
 - name: Module 1 Solve
   hosts: localhost
@@ -48,7 +38,30 @@
           stringData:
             api-key: my-secret-value
 
-    - name: Label ConfigMap lab-config with app=lab (API equivalent of Console step)
+    - name: Get OCP token for Playwright
+      ansible.builtin.shell: >-
+        KUBECONFIG="{{ k8s_kubeconfig }}" oc whoami -t 2>/dev/null || echo ""
+      register: r_token
+      when: k8s_kubeconfig is defined and k8s_kubeconfig | length > 0
+      changed_when: false
+
+    - name: Label ConfigMap via OCP Console (Playwright UI step)
+      ansible.builtin.script:
+        executable: node
+        cmd: "{{ playbook_dir }}/playwright/step-03-label-configmap.js"
+      environment:
+        CONSOLE_URL: "{{ openshift_console_url | default('') }}"
+        NAMESPACE: "{{ student_ns }}"
+        OCP_TOKEN: "{{ r_token.stdout | default('') | trim }}"
+        RESOURCE_NAME: lab-config
+        LABEL_KEY: app
+        LABEL_VALUE: lab
+      register: r_playwright
+      when:
+        - openshift_console_url is defined
+        - openshift_console_url | length > 0
+
+    - name: Fallback — label via API if no console URL
       kubernetes.core.k8s:
         kubeconfig: "{{ k8s_kubeconfig | default(omit) }}"
         validate_certs: false
@@ -61,3 +74,10 @@
             namespace: "{{ student_ns }}"
             labels:
               app: lab
+      when: openshift_console_url is not defined or openshift_console_url | length == 0
+
+    - name: Assert Playwright step succeeded
+      ansible.builtin.assert:
+        that: r_playwright.rc == 0
+        fail_msg: "Console step failed: {{ r_playwright.stdout | default('') }}"
+      when: r_playwright is defined and not (r_playwright.skipped | default(false))
