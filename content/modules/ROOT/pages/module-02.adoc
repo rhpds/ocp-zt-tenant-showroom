@@ -2,19 +2,18 @@
 
 This module has 2 steps in the OCP Console (UI-required) and 1 step via CLI (Ansible-automatable).
 
+Your namespace: `{user}-zttest`
+
 == Step 1: Create a Deployment in the OCP Console (UI — requires browser)
 
-[subs="attributes+"]
---
-. Go to *{openshift_cluster_console_url}*
+. Go to *{openshift_console_url}*
 . Switch to *Developer* perspective
 . Go to *+Add → Container images*
 . Image: `registry.access.redhat.com/ubi9/nginx-120`
 . Application name: `lab-app`
 . Name: `lab-deploy`
-. Namespace: `{student_ns}`
+. Namespace: `{user}-zttest`
 . Click *Create*
---
 
 == Step 2: Scale the Deployment in the OCP Console (UI — requires browser)
 
@@ -25,9 +24,9 @@ This module has 2 steps in the OCP Console (UI-required) and 1 step via CLI (Ans
 
 == Step 3: Verify the Deployment is running (CLI — Ansible automatable)
 
-[source,sh,role="send-to-wetty"]
+[source,sh,role="send-to-wetty",subs="attributes+"]
 ----
-oc get deployment lab-deploy -n {student_ns}
+oc get deployment lab-deploy -n {user}-zttest
 ----
 
 Confirm `READY` shows `2/2`.

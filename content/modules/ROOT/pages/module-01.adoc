@@ -2,37 +2,36 @@
 
 This module has 2 steps done via CLI (Ansible-automatable) and 1 step via the OCP Console (UI-required).
 
+Your namespace: `{user}-zttest`
+
 == Step 1: Create a ConfigMap (CLI — Ansible automatable)
 
-[source,sh,role="send-to-wetty"]
+[source,sh,role="send-to-wetty",subs="attributes+"]
 ----
 oc create configmap lab-config \
   --from-literal=env=dev \
-  --from-literal=owner={student_user} \
-  -n {student_ns}
+  --from-literal=owner={user} \
+  -n {user}-zttest
 ----
 
 == Step 2: Create a Secret (CLI — Ansible automatable)
 
-[source,sh,role="send-to-wetty"]
+[source,sh,role="send-to-wetty",subs="attributes+"]
 ----
 oc create secret generic lab-secret \
   --from-literal=api-key=my-secret-value \
-  -n {student_ns}
+  -n {user}-zttest
 ----
 
 == Step 3: Label the ConfigMap in the OCP Console (UI — requires browser)
 
 Open the OCP Console and label the ConfigMap:
 
-[subs="attributes+"]
---
-. Navigate to *{openshift_cluster_console_url}*
-. Go to *Workloads → ConfigMaps* → select *lab-config* in namespace `{student_ns}`
+. Navigate to *{openshift_console_url}*
+. Go to *Workloads → ConfigMaps* → select *lab-config* in namespace `{user}-zttest`
 . Click *Actions → Edit labels*
 . Add label: `app=lab`
 . Click *Save*
---
 
 ++++
 <div class="solve-button-placeholder" data-module="module-01"></div>
