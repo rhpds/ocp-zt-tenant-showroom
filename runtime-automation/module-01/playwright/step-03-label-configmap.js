@@ -1,5 +1,13 @@
 // UI step: Label ConfigMap lab-config with app=lab via OCP Console
-// Login: Sandbox user → Keycloak (username/password)
+// Login: "Sandbox user" (htpasswd) — NOT "Sandbox user (RHBK)"
+// The has-text selector matches both; use exact match to pick htpasswd.
+//
+// Environment variables:
+//   CONSOLE_URL  — OCP console URL
+//   NAMESPACE    — student namespace
+//   USERNAME     — sandbox username (user extravar)
+//   PASSWORD     — sandbox password (password extravar)
+//   RESOURCE_NAME, LABEL_KEY, LABEL_VALUE
 
 const { chromium } = require("playwright");
 
@@ -13,7 +21,7 @@ const { chromium } = require("playwright");
   const labelValue   = process.env.LABEL_VALUE || "lab";
 
   if (!consoleUrl || !username || !password) {
-    console.error("FAILED: CONSOLE_URL, USERNAME and PASSWORD are required");
+    console.error("FAILED: CONSOLE_URL, USERNAME and PASSWORD required");
     process.exit(1);
   }
 
@@ -21,54 +29,50 @@ const { chromium } = require("playwright");
   const context = await browser.newContext({ ignoreHTTPSErrors: true });
   const page    = await context.newPage();
 
-  // Log URL changes for debugging
-  page.on("framenavigated", frame => {
-    if (frame === page.mainFrame()) {
-      process.stderr.write("[nav] " + frame.url() + "\n");
-    }
+  page.on("framenavigated", f => {
+    if (f === page.mainFrame())
+      process.stderr.write("[nav] " + f.url().substring(0, 80) + "\n");
   });
 
   try {
-    const resourceUrl = `${consoleUrl}/k8s/ns/${namespace}/configmaps/${resourceName}`;
-    await page.goto(resourceUrl, { waitUntil: "networkidle", timeout: 30000 });
-    process.stderr.write("[step1] at: " + page.url() + "\n");
+    await page.goto(`${consoleUrl}/k8s/ns/${namespace}/configmaps/${resourceName}`,
+      { waitUntil: "networkidle", timeout: 30000 });
 
-    // Click Sandbox user
-    const sandboxBtn = page.locator("a:has-text(\"Sandbox user\"), button:has-text(\"Sandbox user\")").first();
+    // Click "Sandbox user" — exact match to avoid picking "Sandbox user (RHBK)"
+    const sandboxBtn = page.getByRole("link", { name: /^Sandbox user$/, exact: true })
+      .or(page.getByRole("button", { name: /^Sandbox user$/, exact: true }));
     await sandboxBtn.waitFor({ state: "visible", timeout: 10000 });
+    process.stderr.write("[click] Sandbox user (exact)\n");
     await sandboxBtn.click();
     await page.waitForLoadState("networkidle", { timeout: 15000 });
-    process.stderr.write("[step2] at: " + page.url() + "\n");
+    process.stderr.write("[after-click] " + page.url().substring(0, 80) + "\n");
 
-    // Fill Keycloak form
-    const usernameField = page.locator("#username, [name=\"username\"], #inputUsername").first();
-    await usernameField.waitFor({ state: "visible", timeout: 10000 });
-    process.stderr.write("[step3] filling username: " + username + "\n");
-    await usernameField.fill(username);
-    await page.locator("#password, [name=\"password\"], input[type=\"password\"]").first().fill(password);
-
-    // Submit and wait for any navigation away from keycloak
+    // Fill htpasswd login form
+    const userField = page.locator("#inputUsername, [name=\"username\"], #username").first();
+    await userField.waitFor({ state: "visible", timeout: 10000 });
+    await userField.fill(username);
+    await page.locator("#inputPassword, [name=\"password\"], input[type=\"password\"]").first().fill(password);
     await Promise.all([
       page.waitForNavigation({ timeout: 30000 }),
-      page.locator("#kc-login, button[type=\"submit\"]").first().click(),
+      page.locator("button[type=\"submit\"], input[type=\"submit\"]").first().click(),
     ]);
-    process.stderr.write("[step4] after submit: " + page.url() + "\n");
+    process.stderr.write("[after-login] " + page.url().substring(0, 80) + "\n");
 
-    // Wait until we are on the console
+    // Wait for console
     if (!page.url().startsWith(consoleUrl)) {
       await page.waitForURL(`${consoleUrl}/**`, { timeout: 20000 });
     }
-    process.stderr.write("[step5] on console: " + page.url() + "\n");
 
     // Navigate to ConfigMap
     if (!page.url().includes(resourceName)) {
-      await page.goto(resourceUrl, { waitUntil: "networkidle", timeout: 20000 });
+      await page.goto(`${consoleUrl}/k8s/ns/${namespace}/configmaps/${resourceName}`,
+        { waitUntil: "networkidle", timeout: 20000 });
     }
 
-    // Actions → Edit labels
-    const actionsBtn = page.locator("[data-test-id=\"actions-menu-button\"], button:has-text(\"Actions\")").first();
-    await actionsBtn.waitFor({ state: "visible", timeout: 15000 });
-    await actionsBtn.click();
+    // Actions → Edit labels → add label → Save
+    await page.locator("[data-test-id=\"actions-menu-button\"], button:has-text(\"Actions\")").first()
+      .waitFor({ state: "visible", timeout: 15000 });
+    await page.locator("[data-test-id=\"actions-menu-button\"], button:has-text(\"Actions\")").first().click();
     await page.locator("li:has-text(\"Edit labels\"), button:has-text(\"Edit labels\")").first().click();
     await page.waitForSelector("input[placeholder*=\"label\"], [data-test=\"labels-input\"]", { timeout: 10000 });
     await page.locator("input[placeholder*=\"label\"], [data-test=\"labels-input\"]").first().fill(`${labelKey}=${labelValue}`);
@@ -79,7 +83,7 @@ const { chromium } = require("playwright");
     console.log(`SUCCESS: ${resourceName} labeled ${labelKey}=${labelValue} in ${namespace}`);
     process.exit(0);
   } catch (err) {
-    process.stderr.write("[error] at: " + page.url() + "\n");
+    process.stderr.write("[error] " + page.url() + "\n");
     console.error(`FAILED: ${err.message}`);
     process.exit(1);
   } finally {

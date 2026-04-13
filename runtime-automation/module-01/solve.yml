@@ -38,7 +38,7 @@
           stringData:
             api-key: my-secret-value
 
-    - name: Label ConfigMap via OCP Console (Playwright — Sandbox user login)
+    - name: Label ConfigMap via OCP Console (Playwright — exact Sandbox user htpasswd)
       ansible.builtin.script:
         executable: node
         cmd: "{{ playbook_dir }}/playwright/step-03-label-configmap.js"
