@@ -1,10 +1,21 @@
 ---
-- name: Module 1 Solve — create ConfigMap with multiple data keys
+# SOLVE — Module 1: CLI + Console
+# Lab type: OCP Tenant (shared cluster, per-student namespace)
+# Extravars: k8s_kubeconfig, student_ns, student_user, guid
+#
+# Steps:
+#   1. Create ConfigMap lab-config    → kubernetes.core.k8s
+#   2. Create Secret lab-secret       → kubernetes.core.k8s
+#   3. Label ConfigMap app=lab        → Playwright (OCP Console UI)
+#      Fallback: kubernetes.core patch if console URL not available
+
+- name: Module 1 Solve — Create ConfigMap and Secret
   hosts: localhost
   connection: local
   gather_facts: false
   tasks:
-    - name: Create lab-config ConfigMap
+
+    - name: Create ConfigMap lab-config
       kubernetes.core.k8s:
         kubeconfig: "{{ k8s_kubeconfig | default(omit) }}"
         validate_certs: false
@@ -18,28 +29,49 @@
           data:
             env: dev
             owner: "{{ student_user }}"
-            solved-by: showroom
 
-    - name: Create lab-status ConfigMap
+    - name: Create Secret lab-secret
       kubernetes.core.k8s:
         kubeconfig: "{{ k8s_kubeconfig | default(omit) }}"
         validate_certs: false
         state: present
         definition:
           apiVersion: v1
-          kind: ConfigMap
+          kind: Secret
           metadata:
-            name: lab-status
+            name: lab-secret
             namespace: "{{ student_ns }}"
-          data:
-            status: solved
-            module: "module-01"
+          stringData:
+            api-key: my-secret-value
 
-    - name: Label lab-config ConfigMap
+    - name: Get OCP token for Playwright
+      ansible.builtin.shell: >-
+        KUBECONFIG="{{ k8s_kubeconfig }}" oc whoami -t 2>/dev/null || echo ""
+      register: r_token
+      when: k8s_kubeconfig is defined and k8s_kubeconfig | length > 0
+      changed_when: false
+
+    - name: Label ConfigMap via OCP Console (Playwright UI step)
+      ansible.builtin.script:
+        executable: node
+        cmd: "{{ playbook_dir }}/playwright/step-03-label-configmap.js"
+      environment:
+        CONSOLE_URL: "{{ openshift_console_url | default('') }}"
+        NAMESPACE: "{{ student_ns }}"
+        OCP_TOKEN: "{{ r_token.stdout | default('') | trim }}"
+        RESOURCE_NAME: lab-config
+        LABEL_KEY: app
+        LABEL_VALUE: lab
+      register: r_playwright
+      when:
+        - openshift_console_url is defined
+        - openshift_console_url | length > 0
+
+    - name: Fallback — label via API if no console URL
       kubernetes.core.k8s:
         kubeconfig: "{{ k8s_kubeconfig | default(omit) }}"
         validate_certs: false
-        state: present
+        state: patched
         definition:
           apiVersion: v1
           kind: ConfigMap
@@ -47,9 +79,11 @@
             name: lab-config
             namespace: "{{ student_ns }}"
             labels:
-              app: zt-lab
-              module: module-01
-          data:
-            env: dev
-            owner: "{{ student_user }}"
-            solved-by: showroom
+              app: lab
+      when: openshift_console_url is not defined or openshift_console_url | length == 0
+
+    - name: Assert Playwright step succeeded
+      ansible.builtin.assert:
+        that: r_playwright.rc == 0
+        fail_msg: "Console step failed: {{ r_playwright.stdout | default('') }}"
+      when: r_playwright is defined and not r_playwright.skipped | default(false)

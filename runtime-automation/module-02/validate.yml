@@ -1,27 +1,45 @@
 ---
-- name: Module 2 Validation — Secret exists in second namespace
+# VALIDATE — Module 2: Console + CLI
+# Always pure Ansible — checks Deployment state via API
+
+- name: Module 2 Validation
   hosts: localhost
   connection: local
   gather_facts: false
   tasks:
-    - name: Check Secret exists
+
+    - name: Get Deployment lab-deploy
       kubernetes.core.k8s_info:
         kubeconfig: "{{ k8s_kubeconfig | default(omit) }}"
         validate_certs: false
-        api_version: v1
-        kind: Secret
-        name: lab-status
-        namespace: "{{ student_ns2 }}"
-      register: r_secret
+        api_version: apps/v1
+        kind: Deployment
+        name: lab-deploy
+        namespace: "{{ student_ns }}"
+      register: r_deploy
 
-    - name: Validate
+    - name: Build task results
+      ansible.builtin.set_fact:
+        _task1_ok: "{{ r_deploy.resources | length > 0 }}"
+        _task2_ok: >-
+          {{ r_deploy.resources | length > 0 and
+             (r_deploy.resources[0].spec.replicas | default(0)) == 2 }}
+        _task3_ok: >-
+          {{ r_deploy.resources | length > 0 and
+             (r_deploy.resources[0].status.readyReplicas | default(0)) == 2 }}
+
+    - name: Validate all tasks
       validation_check:
-        check: "{{ r_secret.resources | length > 0 }}"
-        pass_msg: "✅ Secret lab-status exists in {{ student_ns2 }}"
+        check: "{{ _task1_ok and _task2_ok and _task3_ok }}"
+        pass_msg: |
+          ✅ Task 1: Deployment lab-deploy exists in {{ student_ns }}
+          ✅ Task 2: Deployment has 2 replicas configured
+          ✅ Task 3: Deployment has 2/2 ready replicas
         error_msg: |
-          ❌ Secret lab-status not found in {{ student_ns2 }}.
+          {{ '✅' if _task1_ok else '❌' }} Task 1: Deployment lab-deploy in {{ student_ns }}
+          {{ '✅' if _task2_ok else '❌' }} Task 2: Deployment replicas = 2 (got {{ r_deploy.resources[0].spec.replicas | default(0) if r_deploy.resources | length > 0 else 0 }})
+          {{ '✅' if _task3_ok else '❌' }} Task 3: Ready replicas 2/2 (got {{ r_deploy.resources[0].status.readyReplicas | default(0) if r_deploy.resources | length > 0 else 0 }})
 
           Fix:
-            oc create secret generic lab-status \
-              --from-literal=status=complete \
-              -n {{ student_ns2 }}
+            oc create deployment lab-deploy --image=registry.access.redhat.com/ubi9/nginx-120 -n {{ student_ns }}
+            oc scale deployment lab-deploy --replicas=2 -n {{ student_ns }}

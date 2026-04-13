@@ -1,10 +1,15 @@
 ---
-- name: Module 1 Validation — ConfigMap exists with correct data
+# VALIDATE — Module 1: CLI + Console
+# Always pure Ansible — no Playwright needed for validation
+# Checks state via API regardless of how it was created
+
+- name: Module 1 Validation
   hosts: localhost
   connection: local
   gather_facts: false
   tasks:
-    - name: Check lab-config ConfigMap exists
+
+    - name: Check ConfigMap lab-config exists
       kubernetes.core.k8s_info:
         kubeconfig: "{{ k8s_kubeconfig | default(omit) }}"
         validate_certs: false
@@ -14,52 +19,38 @@
         namespace: "{{ student_ns }}"
       register: r_cm
 
-    - name: Check lab-status ConfigMap exists
+    - name: Check Secret lab-secret exists
       kubernetes.core.k8s_info:
         kubeconfig: "{{ k8s_kubeconfig | default(omit) }}"
         validate_certs: false
         api_version: v1
-        kind: ConfigMap
-        name: lab-status
+        kind: Secret
+        name: lab-secret
         namespace: "{{ student_ns }}"
-      register: r_status
-
-    - name: Check lab-config has correct labels
-      kubernetes.core.k8s_info:
-        kubeconfig: "{{ k8s_kubeconfig | default(omit) }}"
-        validate_certs: false
-        api_version: v1
-        kind: ConfigMap
-        name: lab-config
-        namespace: "{{ student_ns }}"
-        label_selectors:
-          - app=zt-lab
-      register: r_labels
+      register: r_secret
 
     - name: Build task results
       ansible.builtin.set_fact:
         _task1_ok: "{{ r_cm.resources | length > 0 }}"
-        _task2_ok: >-
+        _task2_ok: "{{ r_secret.resources | length > 0 }}"
+        _task3_ok: >-
           {{ r_cm.resources | length > 0 and
-             r_cm.resources[0].data is defined and
-             r_cm.resources[0].data.get('env', '') == 'dev' }}
-        _task3_ok: "{{ r_status.resources | length > 0 }}"
-        _task4_ok: "{{ r_labels.resources | length > 0 }}"
+             'app' in (r_cm.resources[0].metadata.labels | default({})) and
+             r_cm.resources[0].metadata.labels.get('app', '') == 'lab' }}
 
     - name: Validate all tasks
       validation_check:
-        check: "{{ _task1_ok and _task2_ok and _task3_ok and _task4_ok }}"
+        check: "{{ _task1_ok and _task2_ok and _task3_ok }}"
         pass_msg: |
           ✅ Task 1: ConfigMap lab-config exists in {{ student_ns }}
-          ✅ Task 2: ConfigMap has env=dev data key
-          ✅ Task 3: ConfigMap lab-status exists
-          ✅ Task 4: lab-config has app=zt-lab label
+          ✅ Task 2: Secret lab-secret exists in {{ student_ns }}
+          ✅ Task 3: ConfigMap has label app=lab
         error_msg: |
-          {{ '✅' if _task1_ok else '❌' }} Task 1: ConfigMap lab-config exists in {{ student_ns }}
-          {{ '✅' if _task2_ok else '❌' }} Task 2: ConfigMap has env=dev data key
-          {{ '✅' if _task3_ok else '❌' }} Task 3: ConfigMap lab-status exists
-          {{ '✅' if _task4_ok else '❌' }} Task 4: lab-config has app=zt-lab label
+          {{ '✅' if _task1_ok else '❌' }} Task 1: ConfigMap lab-config in {{ student_ns }}
+          {{ '✅' if _task2_ok else '❌' }} Task 2: Secret lab-secret in {{ student_ns }}
+          {{ '✅' if _task3_ok else '❌' }} Task 3: ConfigMap label app=lab
 
           Fix:
-            oc create configmap lab-config --from-literal=env=dev -n {{ student_ns }}
-            Run the Solve button to create all required resources.
+            oc create configmap lab-config --from-literal=env=dev --from-literal=owner={{ student_user }} -n {{ student_ns }}
+            oc create secret generic lab-secret --from-literal=api-key=my-secret-value -n {{ student_ns }}
+            oc label configmap lab-config app=lab -n {{ student_ns }}

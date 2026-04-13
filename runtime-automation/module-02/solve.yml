@@ -1,19 +1,113 @@
 ---
-- name: Module 2 Solve — create Secret in second namespace
+# SOLVE — Module 2: Console + CLI
+# Lab type: OCP Tenant
+# Extravars: k8s_kubeconfig, student_ns, student_user, guid
+#
+# Steps:
+#   1. Create Deployment via OCP Console  → Playwright (browser UI)
+#   2. Scale Deployment to 2 via Console  → Playwright (browser UI)
+#   3. Verify deployment running          → kubernetes.core (verify only)
+#
+# Fallback for steps 1+2: kubernetes.core.k8s creates Deployment directly
+
+- name: Module 2 Solve — Create and Scale Deployment
   hosts: localhost
   connection: local
   gather_facts: false
   tasks:
-    - kubernetes.core.k8s:
+
+    - name: Get OCP token for Playwright
+      ansible.builtin.shell: >-
+        KUBECONFIG="{{ k8s_kubeconfig }}" oc whoami -t 2>/dev/null || echo ""
+      register: r_token
+      when: k8s_kubeconfig is defined and k8s_kubeconfig | length > 0
+      changed_when: false
+
+    - name: Create Deployment via OCP Console (Playwright UI step)
+      ansible.builtin.script:
+        executable: node
+        cmd: "{{ playbook_dir }}/playwright/step-01-create-deployment.js"
+      environment:
+        CONSOLE_URL: "{{ openshift_console_url | default('') }}"
+        NAMESPACE: "{{ student_ns }}"
+        OCP_TOKEN: "{{ r_token.stdout | default('') | trim }}"
+        APP_NAME: lab-app
+        DEPLOY_NAME: lab-deploy
+        IMAGE: registry.access.redhat.com/ubi9/nginx-120
+      register: r_create
+      when:
+        - openshift_console_url is defined
+        - openshift_console_url | length > 0
+
+    - name: Fallback — create Deployment via API
+      kubernetes.core.k8s:
         kubeconfig: "{{ k8s_kubeconfig | default(omit) }}"
         validate_certs: false
         state: present
         definition:
-          apiVersion: v1
-          kind: Secret
+          apiVersion: apps/v1
+          kind: Deployment
           metadata:
-            name: lab-status
-            namespace: "{{ student_ns2 }}"
-          stringData:
-            status: complete
-            module: "2"
+            name: lab-deploy
+            namespace: "{{ student_ns }}"
+            labels:
+              app: lab-app
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: lab-app
+            template:
+              metadata:
+                labels:
+                  app: lab-app
+              spec:
+                containers:
+                  - name: nginx
+                    image: registry.access.redhat.com/ubi9/nginx-120
+      when: openshift_console_url is not defined or openshift_console_url | length == 0
+
+    - name: Scale Deployment to 2 via OCP Console (Playwright UI step)
+      ansible.builtin.script:
+        executable: node
+        cmd: "{{ playbook_dir }}/playwright/step-02-scale-deployment.js"
+      environment:
+        CONSOLE_URL: "{{ openshift_console_url | default('') }}"
+        NAMESPACE: "{{ student_ns }}"
+        OCP_TOKEN: "{{ r_token.stdout | default('') | trim }}"
+        DEPLOY_NAME: lab-deploy
+        REPLICAS: "2"
+      register: r_scale
+      when:
+        - openshift_console_url is defined
+        - openshift_console_url | length > 0
+
+    - name: Fallback — scale to 2 via API
+      kubernetes.core.k8s:
+        kubeconfig: "{{ k8s_kubeconfig | default(omit) }}"
+        validate_certs: false
+        state: patched
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: lab-deploy
+            namespace: "{{ student_ns }}"
+          spec:
+            replicas: 2
+      when: openshift_console_url is not defined or openshift_console_url | length == 0
+
+    - name: Wait for Deployment to be ready
+      kubernetes.core.k8s_info:
+        kubeconfig: "{{ k8s_kubeconfig | default(omit) }}"
+        validate_certs: false
+        api_version: apps/v1
+        kind: Deployment
+        name: lab-deploy
+        namespace: "{{ student_ns }}"
+      register: r_deploy
+      until: >-
+        r_deploy.resources | length > 0 and
+        (r_deploy.resources[0].status.readyReplicas | default(0)) == 2
+      retries: 12
+      delay: 10
