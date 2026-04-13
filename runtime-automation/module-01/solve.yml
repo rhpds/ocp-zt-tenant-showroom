@@ -51,6 +51,7 @@
         cmd: "{{ playbook_dir }}/playwright/step-03-label-configmap.js"
       environment:
         CONSOLE_URL: "{{ openshift_console_url | default('') }}"
+        API_URL: "{{ openshift_api_url | default('') }}"
         NAMESPACE: "{{ student_ns }}"
         OCP_TOKEN: "{{ r_token.stdout | default('') | trim }}"
         RESOURCE_NAME: lab-config
