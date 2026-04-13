@@ -1,12 +1,5 @@
 // UI step: Label ConfigMap lab-config with app=lab via OCP Console
-// Login: Sandbox user → Keycloak username/password form
-//
-// Environment variables:
-//   CONSOLE_URL  — OCP console URL
-//   NAMESPACE    — student namespace
-//   USERNAME     — sandbox username (user extravar, e.g. devuser-tz29g)
-//   PASSWORD     — sandbox password (password extravar)
-//   RESOURCE_NAME, LABEL_KEY, LABEL_VALUE
+// Login: Sandbox user → Keycloak (username/password)
 
 const { chromium } = require("playwright");
 
@@ -28,46 +21,65 @@ const { chromium } = require("playwright");
   const context = await browser.newContext({ ignoreHTTPSErrors: true });
   const page    = await context.newPage();
 
+  // Log URL changes for debugging
+  page.on("framenavigated", frame => {
+    if (frame === page.mainFrame()) {
+      process.stderr.write("[nav] " + frame.url() + "\n");
+    }
+  });
+
   try {
     const resourceUrl = `${consoleUrl}/k8s/ns/${namespace}/configmaps/${resourceName}`;
     await page.goto(resourceUrl, { waitUntil: "networkidle", timeout: 30000 });
+    process.stderr.write("[step1] at: " + page.url() + "\n");
 
-    // 1. Click "Sandbox user" on the identity provider selector
-    const sandboxBtn = page.locator("button:has-text(\"Sandbox user\"), a:has-text(\"Sandbox user\")").first();
+    // Click Sandbox user
+    const sandboxBtn = page.locator("a:has-text(\"Sandbox user\"), button:has-text(\"Sandbox user\")").first();
     await sandboxBtn.waitFor({ state: "visible", timeout: 10000 });
     await sandboxBtn.click();
+    await page.waitForLoadState("networkidle", { timeout: 15000 });
+    process.stderr.write("[step2] at: " + page.url() + "\n");
 
-    // 2. Fill Keycloak login form
-    await page.waitForSelector("#username, #inputUsername, [name=\"username\"]", { timeout: 15000 });
-    await page.fill("#username, #inputUsername, [name=\"username\"]", username);
-    await page.fill("#password, #inputPassword, [name=\"password\"], input[type=\"password\"]", password);
-    await page.click("#kc-login, button[type=\"submit\"]");
+    // Fill Keycloak form
+    const usernameField = page.locator("#username, [name=\"username\"], #inputUsername").first();
+    await usernameField.waitFor({ state: "visible", timeout: 10000 });
+    process.stderr.write("[step3] filling username: " + username + "\n");
+    await usernameField.fill(username);
+    await page.locator("#password, [name=\"password\"], input[type=\"password\"]").first().fill(password);
 
-    // 3. Wait for redirect back to OCP console
-    await page.waitForURL(`${consoleUrl}/**`, { timeout: 30000 });
-    await page.waitForLoadState("networkidle", { timeout: 20000 });
+    // Submit and wait for any navigation away from keycloak
+    await Promise.all([
+      page.waitForNavigation({ timeout: 30000 }),
+      page.locator("#kc-login, button[type=\"submit\"]").first().click(),
+    ]);
+    process.stderr.write("[step4] after submit: " + page.url() + "\n");
 
-    // 4. Navigate to ConfigMap if needed
+    // Wait until we are on the console
+    if (!page.url().startsWith(consoleUrl)) {
+      await page.waitForURL(`${consoleUrl}/**`, { timeout: 20000 });
+    }
+    process.stderr.write("[step5] on console: " + page.url() + "\n");
+
+    // Navigate to ConfigMap
     if (!page.url().includes(resourceName)) {
       await page.goto(resourceUrl, { waitUntil: "networkidle", timeout: 20000 });
     }
 
-    // 5. Actions → Edit labels
-    await page.locator("[data-test-id=\"actions-menu-button\"], button:has-text(\"Actions\")").first().waitFor({ state: "visible", timeout: 15000 });
-    await page.locator("[data-test-id=\"actions-menu-button\"], button:has-text(\"Actions\")").first().click();
-    await page.locator("button:has-text(\"Edit labels\"), li:has-text(\"Edit labels\")").first().click();
+    // Actions → Edit labels
+    const actionsBtn = page.locator("[data-test-id=\"actions-menu-button\"], button:has-text(\"Actions\")").first();
+    await actionsBtn.waitFor({ state: "visible", timeout: 15000 });
+    await actionsBtn.click();
+    await page.locator("li:has-text(\"Edit labels\"), button:has-text(\"Edit labels\")").first().click();
     await page.waitForSelector("input[placeholder*=\"label\"], [data-test=\"labels-input\"]", { timeout: 10000 });
-
-    // 6. Add label and save
-    const input = page.locator("input[placeholder*=\"label\"], [data-test=\"labels-input\"]").first();
-    await input.fill(`${labelKey}=${labelValue}`);
+    await page.locator("input[placeholder*=\"label\"], [data-test=\"labels-input\"]").first().fill(`${labelKey}=${labelValue}`);
     await page.keyboard.press("Enter");
     await page.locator("button:has-text(\"Save\"), [data-test=\"confirm-action\"]").first().click();
     await page.waitForTimeout(2000);
 
-    console.log(`SUCCESS: ${resourceName} labeled ${labelKey}=${labelValue} in ${namespace} via OCP Console`);
+    console.log(`SUCCESS: ${resourceName} labeled ${labelKey}=${labelValue} in ${namespace}`);
     process.exit(0);
   } catch (err) {
+    process.stderr.write("[error] at: " + page.url() + "\n");
     console.error(`FAILED: ${err.message}`);
     process.exit(1);
   } finally {
