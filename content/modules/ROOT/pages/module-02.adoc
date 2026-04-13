@@ -1,52 +1,37 @@
-= Module 2: Create a Secret in Your Second Namespace
+= Module 2: Console + CLI
 
-In this module create a Secret in `{user}-ztworkspace` — your second pre-created namespace.
+This module has 2 steps in the OCP Console (UI-required) and 1 step via CLI (Ansible-automatable).
 
-== Your Task
+== Step 1: Create a Deployment in the OCP Console (UI — requires browser)
 
-[source,sh,role=execute]
+. Go to *{openshift_cluster_console_url}*
+. Switch to *Developer* perspective
+. Go to *+Add → Container images*
+. Image: `registry.access.redhat.com/ubi9/nginx-120`
+. Application name: `lab-app`
+. Name: `lab-deploy`
+. Namespace: `{student_ns}`
+. Click *Create*
+
+== Step 2: Scale the Deployment in the OCP Console (UI — requires browser)
+
+. Go to *Workloads → Deployments* → select *lab-deploy*
+. Click *Actions → Edit Pod count*
+. Set replicas to *2*
+. Click *Save*
+
+== Step 3: Verify the Deployment is running (CLI — Ansible automatable)
+
+[source,sh,role="send-to-wetty"]
 ----
-oc create secret generic lab-status \
-  --from-literal=status=complete \
-  --from-literal=module=2 \
-  -n {user}-ztworkspace
-----
-
-=== Verify
-
-[source,sh,role=execute]
-----
-oc get secret lab-status -n {user}-ztworkspace
-----
-
-== Adding Dynamic Dependencies
-
-If your playbooks need extra collections or Python packages, add to `runtime-automation/`:
-
-[source]
-----
-runtime-automation/
-├── requirements.txt    # pip install at container start
-├── requirements.yml    # ansible-galaxy collection install at start
-├── module-01/
-└── module-02/
+oc get deployment lab-deploy -n {student_ns}
 ----
 
-Example `requirements.yml`:
-[source,yaml]
-----
-collections:
-  - name: community.general
-    version: ">=8.0"
-----
-
-include::common/solve-button.adoc[]
+Confirm `READY` shows `2/2`.
 
 ++++
 <div class="solve-button-placeholder" data-module="module-02"></div>
 ++++
-
-include::common/validate-button.adoc[]
 
 ++++
 <div class="validate-button-placeholder" data-module="module-02"></div>

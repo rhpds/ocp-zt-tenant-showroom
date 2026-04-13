@@ -1,62 +1,35 @@
-= Module 1: Create a ConfigMap in Your Namespace
+= Module 1: CLI + Console
 
-In this module create a ConfigMap in your namespace `{user}-zttest`.
+This module has 2 steps done via CLI (Ansible-automatable) and 1 step via the OCP Console (UI-required).
 
-== Your Task
+== Step 1: Create a ConfigMap (CLI — Ansible automatable)
 
 [source,sh,role="send-to-wetty"]
 ----
 oc create configmap lab-config \
   --from-literal=env=dev \
-  --from-literal=owner={user} \
-  -n {user}-zttest
+  --from-literal=owner={student_user} \
+  -n {student_ns}
 ----
 
-=== Verify
+== Step 2: Create a Secret (CLI — Ansible automatable)
 
 [source,sh,role="send-to-wetty"]
 ----
-oc get configmap lab-config -n {user}-zttest -o yaml
+oc create secret generic lab-secret \
+  --from-literal=api-key=my-secret-value \
+  -n {student_ns}
 ----
 
-== How Validation Works
+== Step 3: Label the ConfigMap in the OCP Console (UI — requires browser)
 
-The `validation.yml` playbook:
+Open the OCP Console and label the ConfigMap:
 
-[source,yaml]
-----
-- hosts: localhost
-  connection: local
-  gather_facts: false
-  tasks:
-    - kubernetes.core.k8s_info:
-        kubeconfig: "{{ k8s_kubeconfig | default(omit) }}"
-        validate_certs: false
-        api_version: v1
-        kind: ConfigMap
-        name: lab-config
-        namespace: "{{ student_ns }}"
-      register: r_cm
-
-    - ansible.builtin.set_fact:
-        _task1_ok: "{{ r_cm.resources | length > 0 }}"
-        _task2_ok: >-
-          {{ r_cm.resources | length > 0 and
-             r_cm.resources[0].data is defined and
-             r_cm.resources[0].data.get('env','') == 'dev' }}
-
-    - validation_check:
-        check: "{{ _task1_ok and _task2_ok }}"
-        pass_msg: |
-          ✅ Task 1: ConfigMap lab-config exists in {{ student_ns }}
-          ✅ Task 2: ConfigMap has env=dev
-        error_msg: |
-          {{ '✅' if _task1_ok else '❌' }} Task 1: ConfigMap lab-config exists
-          {{ '✅' if _task2_ok else '❌' }} Task 2: ConfigMap has env=dev
-
-          Fix:
-            oc create configmap lab-config --from-literal=env=dev -n {{ student_ns }}
-----
+. Navigate to *{openshift_cluster_console_url}*
+. Go to *Workloads → ConfigMaps* → select *lab-config* in namespace `{student_ns}`
+. Click *Actions → Edit labels*
+. Add label: `app=lab`
+. Click *Save*
 
 ++++
 <div class="solve-button-placeholder" data-module="module-01"></div>
