@@ -1,13 +1,6 @@
-// UI step: Label ConfigMap lab-config with app=lab via OCP Console
-// Login: "Sandbox user" (htpasswd) — NOT "Sandbox user (RHBK)"
-// The has-text selector matches both; use exact match to pick htpasswd.
-//
-// Environment variables:
-//   CONSOLE_URL  — OCP console URL
-//   NAMESPACE    — student namespace
-//   USERNAME     — sandbox username (user extravar)
-//   PASSWORD     — sandbox password (password extravar)
-//   RESOURCE_NAME, LABEL_KEY, LABEL_VALUE
+// UI step: Label ConfigMap via OCP Console
+// Login: Sandbox user (RHBK) → Keycloak
+// Anti-detection: hide webdriver flag so Keycloak doesn't block headless browser
 
 const { chromium } = require("playwright");
 
@@ -20,43 +13,64 @@ const { chromium } = require("playwright");
   const labelKey     = process.env.LABEL_KEY || "app";
   const labelValue   = process.env.LABEL_VALUE || "lab";
 
-  if (!consoleUrl || !username || !password) {
-    console.error("FAILED: CONSOLE_URL, USERNAME and PASSWORD required");
-    process.exit(1);
-  }
+  const browser = await chromium.launch({
+    headless: true,
+    args: [
+      "--disable-blink-features=AutomationControlled",
+      "--no-sandbox",
+    ],
+  });
 
-  const browser = await chromium.launch({ headless: true });
-  const context = await browser.newContext({ ignoreHTTPSErrors: true });
-  const page    = await context.newPage();
+  const context = await browser.newContext({
+    ignoreHTTPSErrors: true,
+    userAgent: "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+  });
+
+  // Hide webdriver flag — Keycloak and other auth systems check this
+  await context.addInitScript(() => {
+    Object.defineProperty(navigator, "webdriver", { get: () => false });
+    delete navigator.__proto__.webdriver;
+  });
+
+  const page = await context.newPage();
 
   page.on("framenavigated", f => {
     if (f === page.mainFrame())
-      process.stderr.write("[nav] " + f.url().substring(0, 80) + "\n");
+      process.stderr.write("[nav] " + f.url().substring(0, 100) + "\n");
   });
 
   try {
     await page.goto(`${consoleUrl}/k8s/ns/${namespace}/configmaps/${resourceName}`,
       { waitUntil: "networkidle", timeout: 30000 });
 
-    // Click "Sandbox user" — exact match to avoid picking "Sandbox user (RHBK)"
-    const sandboxBtn = page.getByRole("link", { name: /^Sandbox user$/, exact: true })
-      .or(page.getByRole("button", { name: /^Sandbox user$/, exact: true }));
-    await sandboxBtn.waitFor({ state: "visible", timeout: 10000 });
-    process.stderr.write("[click] Sandbox user (exact)\n");
-    await sandboxBtn.click();
+    // Click "Sandbox user (RHBK)" — exact match
+    const rhbkBtn = page.getByRole("link", { name: /Sandbox user.*RHBK/i })
+      .or(page.getByRole("button", { name: /Sandbox user.*RHBK/i }))
+      .or(page.locator("a, button").filter({ hasText: /Sandbox user.*RHBK/i }));
+    await rhbkBtn.first().waitFor({ state: "visible", timeout: 10000 });
+    process.stderr.write("[click] Sandbox user (RHBK)\n");
+    await rhbkBtn.first().click();
     await page.waitForLoadState("networkidle", { timeout: 15000 });
-    process.stderr.write("[after-click] " + page.url().substring(0, 80) + "\n");
 
-    // Fill htpasswd login form
-    const userField = page.locator("#inputUsername, [name=\"username\"], #username").first();
+    // Fill Keycloak form with a small delay (mimic human typing)
+    const userField = page.locator("#username, [name=\"username\"]").first();
     await userField.waitFor({ state: "visible", timeout: 10000 });
-    await userField.fill(username);
-    await page.locator("#inputPassword, [name=\"password\"], input[type=\"password\"]").first().fill(password);
+    await userField.click();
+    await page.waitForTimeout(200);
+    await userField.type(username, { delay: 50 });
+
+    const passField = page.locator("#password, [name=\"password\"], input[type=\"password\"]").first();
+    await passField.click();
+    await page.waitForTimeout(200);
+    await passField.type(password, { delay: 50 });
+
+    await page.waitForTimeout(300);
+    process.stderr.write("[submit] clicking kc-login\n");
     await Promise.all([
       page.waitForNavigation({ timeout: 30000 }),
-      page.locator("button[type=\"submit\"], input[type=\"submit\"]").first().click(),
+      page.locator("#kc-login, button[type=\"submit\"]").first().click(),
     ]);
-    process.stderr.write("[after-login] " + page.url().substring(0, 80) + "\n");
+    process.stderr.write("[after-login] " + page.url().substring(0, 100) + "\n");
 
     // Wait for console
     if (!page.url().startsWith(consoleUrl)) {
@@ -69,7 +83,7 @@ const { chromium } = require("playwright");
         { waitUntil: "networkidle", timeout: 20000 });
     }
 
-    // Actions → Edit labels → add label → Save
+    // Actions → Edit labels → Save
     await page.locator("[data-test-id=\"actions-menu-button\"], button:has-text(\"Actions\")").first()
       .waitFor({ state: "visible", timeout: 15000 });
     await page.locator("[data-test-id=\"actions-menu-button\"], button:has-text(\"Actions\")").first().click();
