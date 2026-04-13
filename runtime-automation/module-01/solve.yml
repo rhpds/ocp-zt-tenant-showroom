@@ -38,22 +38,13 @@
           stringData:
             api-key: my-secret-value
 
-    - name: Get OCP token for Playwright
-      ansible.builtin.shell: >-
-        KUBECONFIG="{{ k8s_kubeconfig }}" oc whoami -t 2>/dev/null || echo ""
-      register: r_token
-      when: k8s_kubeconfig is defined and k8s_kubeconfig | length > 0
-      changed_when: false
-
-    - name: Label ConfigMap via OCP Console (Playwright UI step)
+    - name: Label ConfigMap via OCP Console (Playwright/oc UI step)
       ansible.builtin.script:
         executable: node
         cmd: "{{ playbook_dir }}/playwright/step-03-label-configmap.js"
       environment:
-        CONSOLE_URL: "{{ openshift_console_url | default('') }}"
-        API_URL: "{{ openshift_api_url | default('') }}"
+        KUBECONFIG: "{{ k8s_kubeconfig | default('') }}"
         NAMESPACE: "{{ student_ns }}"
-        OCP_TOKEN: "{{ r_token.stdout | default('') | trim }}"
         RESOURCE_NAME: lab-config
         LABEL_KEY: app
         LABEL_VALUE: lab
