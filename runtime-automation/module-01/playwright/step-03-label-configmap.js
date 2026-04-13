@@ -83,9 +83,12 @@ const { chromium } = require("playwright");
         { waitUntil: "networkidle", timeout: 20000 });
     }
 
+    // Wait for page to fully render (console SPA needs time after navigation)
+    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle', { timeout: 15000 });
     // Actions → Edit labels → Save
     await page.locator("[data-test-id=\"actions-menu-button\"], button:has-text(\"Actions\")").first()
-      .waitFor({ state: "visible", timeout: 15000 });
+      .waitFor({ state: "visible", timeout: 30000 });
     await page.locator("[data-test-id=\"actions-menu-button\"], button:has-text(\"Actions\")").first().click();
     await page.locator("li:has-text(\"Edit labels\"), button:has-text(\"Edit labels\")").first().click();
     await page.waitForSelector("input[placeholder*=\"label\"], [data-test=\"labels-input\"]", { timeout: 10000 });
